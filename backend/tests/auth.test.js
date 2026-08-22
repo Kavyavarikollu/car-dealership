@@ -11,8 +11,8 @@ describe("User Registration", () => {
             .post("/api/auth/register")
             .send({
                 name: "Kavya",
-                email: "kavya20260912@test.com",
-                password: "123456"
+email: "kavya20260822_2049@test.com",
+password: "123456"
             });
 
         expect(response.statusCode).toBe(201);
@@ -360,6 +360,17 @@ describe("User Registration", () => {
         expect(response.statusCode).toBe(401);
     });
 
+test("should reject registration with name shorter than 2 characters", async () => {
+    const response = await request(app)
+        .post("/api/auth/register")
+        .send({
+            name: "K",
+            email: "shortname@test.com",
+            password: "123456"
+        });
+
+    expect(response.statusCode).toBe(400);
+});
     afterAll((done) => {
         db.end(done);
     });

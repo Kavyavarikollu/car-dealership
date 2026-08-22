@@ -25,6 +25,13 @@ app.post("/api/auth/register", async (req, res) => {
         });
     }
 
+    // Name must contain at least 2 characters
+    if (name.trim().length < 2) {
+        return res.status(400).json({
+            message: "Name must be at least 2 characters"
+        });
+    }
+
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -46,7 +53,7 @@ app.post("/api/auth/register", async (req, res) => {
 
         await db.promise().query(
             "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
-            [name, email, hashedPassword]
+            [name.trim(), email, hashedPassword]
         );
 
         res.status(201).json({
@@ -78,7 +85,6 @@ app.post("/api/auth/login", async (req, res) => {
         });
     }
 
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!emailRegex.test(email)) {
