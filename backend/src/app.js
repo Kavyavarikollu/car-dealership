@@ -71,6 +71,15 @@ app.post("/api/auth/login", async (req, res) => {
         });
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(email)) {
+        return res.status(400).json({
+            message: "Invalid email format"
+        });
+    }
+
     try {
         const [rows] = await db.promise().query(
             "SELECT * FROM users WHERE email = ?",
