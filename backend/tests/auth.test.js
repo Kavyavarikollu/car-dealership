@@ -11,7 +11,7 @@ describe("User Registration", () => {
             .post("/api/auth/register")
             .send({
                 name: "Kavya",
-               email: "kavya20260902@test.com",
+                email: "kavya20260903@test.com",
                 password: "123456"
             });
 
@@ -217,6 +217,36 @@ describe("User Registration", () => {
             .set("Authorization", "invalid");
 
         expect(response.statusCode).toBe(401);
+    });
+
+    test("should not expose password in profile", async () => {
+        const email = "secureprofile@test.com";
+        const password = "123456";
+
+        await request(app)
+            .post("/api/auth/register")
+            .send({
+                name: "Secure Profile User",
+                email: email,
+                password: password
+            });
+
+        const loginResponse = await request(app)
+            .post("/api/auth/login")
+            .send({
+                email: email,
+                password: password
+            });
+
+        const token = loginResponse.body.token;
+
+        const response = await request(app)
+            .get("/api/auth/profile")
+            .set("Authorization", `Bearer ${token}`);
+
+        expect(response.statusCode).toBe(200);
+        expect(response.body.email).toBe(email);
+        expect(response.body.password).toBeUndefined();
     });
 
     afterAll((done) => {
