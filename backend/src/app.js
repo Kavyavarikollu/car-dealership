@@ -1,5 +1,6 @@
 const express = require("express");
 const db = require("./db");
+const bcrypt = require("bcryptjs");
 
 const app = express();
 
@@ -15,9 +16,11 @@ app.post("/api/auth/register", async (req, res) => {
     }
 
     try {
+        const hashedPassword = await bcrypt.hash(password, 10);
+
         await db.promise().query(
             "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
-            [name, email, password]
+            [name, email, hashedPassword]
         );
 
         res.status(201).json({
