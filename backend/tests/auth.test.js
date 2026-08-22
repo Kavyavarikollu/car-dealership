@@ -11,7 +11,7 @@ describe("User Registration", () => {
             .post("/api/auth/register")
             .send({
                 name: "Kavya",
-                email: "kavya20260907@test.com",
+               email: "kavya20260908@test.com",
                 password: "123456"
             });
 
