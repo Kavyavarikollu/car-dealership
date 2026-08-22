@@ -408,6 +408,17 @@ describe("User Registration", () => {
 
         expect(response.statusCode).toBe(401);
     });
+    test("should reject registration with name longer than 50 characters", async () => {
+    const response = await request(app)
+        .post("/api/auth/register")
+        .send({
+            name: "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ",
+            email: "longname@test.com",
+            password: "123456"
+        });
+
+    expect(response.statusCode).toBe(400);
+});
 
     afterAll((done) => {
         db.end(done);

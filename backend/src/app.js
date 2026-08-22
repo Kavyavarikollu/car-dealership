@@ -25,10 +25,17 @@ app.post("/api/auth/register", async (req, res) => {
         });
     }
 
-    // Name must contain at least 2 characters
+    // Name minimum length
     if (name.trim().length < 2) {
         return res.status(400).json({
             message: "Name must be at least 2 characters"
+        });
+    }
+
+    // Name maximum length
+    if (name.trim().length > 50) {
+        return res.status(400).json({
+            message: "Name must not exceed 50 characters"
         });
     }
 
@@ -48,14 +55,14 @@ app.post("/api/auth/register", async (req, res) => {
         });
     }
 
-    // Password must be at least 6 characters
+    // Password minimum length
     if (password.length < 6) {
         return res.status(400).json({
             message: "Password must be at least 6 characters"
         });
     }
 
-    // Password must not exceed 50 characters
+    // Password maximum length
     if (password.length > 50) {
         return res.status(400).json({
             message: "Password must not exceed 50 characters"
