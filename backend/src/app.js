@@ -32,6 +32,13 @@ app.post("/api/auth/register", async (req, res) => {
         });
     }
 
+    // Reject email with spaces
+    if (email !== email.trim() || email.includes(" ")) {
+        return res.status(400).json({
+            message: "Email cannot contain spaces"
+        });
+    }
+
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -45,6 +52,13 @@ app.post("/api/auth/register", async (req, res) => {
     if (password.length < 6) {
         return res.status(400).json({
             message: "Password must be at least 6 characters"
+        });
+    }
+
+    // Password must not exceed 50 characters
+    if (password.length > 50) {
+        return res.status(400).json({
+            message: "Password must not exceed 50 characters"
         });
     }
 
@@ -85,6 +99,14 @@ app.post("/api/auth/login", async (req, res) => {
         });
     }
 
+    // Reject email with spaces
+    if (email !== email.trim() || email.includes(" ")) {
+        return res.status(400).json({
+            message: "Email cannot contain spaces"
+        });
+    }
+
+    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!emailRegex.test(email)) {

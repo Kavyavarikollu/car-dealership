@@ -4,6 +4,8 @@ const db = require("../src/db");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
+const uniqueEmail = `kavya_${Date.now()}@test.com`;
+
 describe("User Registration", () => {
 
     test("should register a new user", async () => {
@@ -11,8 +13,8 @@ describe("User Registration", () => {
             .post("/api/auth/register")
             .send({
                 name: "Kavya",
-email: "kavya20260822_2049@test.com",
-password: "123456"
+                email: uniqueEmail,
+                password: "123456"
             });
 
         expect(response.statusCode).toBe(201);
@@ -53,6 +55,18 @@ password: "123456"
         expect(response.statusCode).toBe(400);
     });
 
+    test("should reject registration with email containing spaces", async () => {
+        const response = await request(app)
+            .post("/api/auth/register")
+            .send({
+                name: "Kavya",
+                email: " kavya@test.com ",
+                password: "123456"
+            });
+
+        expect(response.statusCode).toBe(400);
+    });
+
     test("should reject registration with short password", async () => {
         const response = await request(app)
             .post("/api/auth/register")
@@ -60,6 +74,30 @@ password: "123456"
                 name: "Kavya",
                 email: "shortpassword@test.com",
                 password: "123"
+            });
+
+        expect(response.statusCode).toBe(400);
+    });
+
+    test("should reject registration with long password", async () => {
+        const response = await request(app)
+            .post("/api/auth/register")
+            .send({
+                name: "Kavya",
+                email: "longpassword@test.com",
+                password: "123456789012345678901234567890123456789012345678901"
+            });
+
+        expect(response.statusCode).toBe(400);
+    });
+
+    test("should reject registration with name shorter than 2 characters", async () => {
+        const response = await request(app)
+            .post("/api/auth/register")
+            .send({
+                name: "K",
+                email: "shortname@test.com",
+                password: "123456"
             });
 
         expect(response.statusCode).toBe(400);
@@ -176,6 +214,17 @@ password: "123456"
             .post("/api/auth/login")
             .send({
                 email: "invalidemail",
+                password: "123456"
+            });
+
+        expect(response.statusCode).toBe(400);
+    });
+
+    test("should reject login with email containing spaces", async () => {
+        const response = await request(app)
+            .post("/api/auth/login")
+            .send({
+                email: " login@test.com ",
                 password: "123456"
             });
 
@@ -360,17 +409,6 @@ password: "123456"
         expect(response.statusCode).toBe(401);
     });
 
-test("should reject registration with name shorter than 2 characters", async () => {
-    const response = await request(app)
-        .post("/api/auth/register")
-        .send({
-            name: "K",
-            email: "shortname@test.com",
-            password: "123456"
-        });
-
-    expect(response.statusCode).toBe(400);
-});
     afterAll((done) => {
         db.end(done);
     });
