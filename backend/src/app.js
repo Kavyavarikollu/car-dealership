@@ -27,6 +27,12 @@ app.post("/api/auth/register", async (req, res) => {
             message: "User registered successfully"
         });
     } catch (error) {
+        if (error.code === "ER_DUP_ENTRY") {
+            return res.status(409).json({
+                message: "Email already exists"
+            });
+        }
+
         res.status(500).json({
             message: "Registration failed"
         });

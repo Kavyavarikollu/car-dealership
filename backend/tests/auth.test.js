@@ -10,7 +10,7 @@ describe("User Registration", () => {
             .post("/api/auth/register")
             .send({
                 name: "Kavya",
-                email: "kavya3@test.com",
+                email: "kavya5@test.com",
                 password: "123456"
             });
 
@@ -67,6 +67,28 @@ describe("User Registration", () => {
         expect(rows.length).toBe(1);
         expect(rows[0].password).not.toBe(password);
         expect(await bcrypt.compare(password, rows[0].password)).toBe(true);
+    });
+
+    test("should reject duplicate email", async () => {
+        const email = "duplicate@test.com";
+
+        await request(app)
+            .post("/api/auth/register")
+            .send({
+                name: "First User",
+                email: email,
+                password: "123456"
+            });
+
+        const response = await request(app)
+            .post("/api/auth/register")
+            .send({
+                name: "Second User",
+                email: email,
+                password: "123456"
+            });
+
+        expect(response.statusCode).toBe(409);
     });
 
 });
