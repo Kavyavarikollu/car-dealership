@@ -615,7 +615,30 @@ describe("User Registration", () => {
 
         expect(response.statusCode).toBe(401);
     });
+test("should reject login with short password", async () => {
+    const response = await request(app)
+        .post("/api/auth/login")
+        .send({
+            email: "test@test.com",
+            password: "Kav1"
+        });
 
+    expect(response.statusCode).toBe(400);
+});
+
+test("should reject login with long password", async () => {
+    const password =
+        "Kavya12345678901234567890123456789012345678901234567890";
+
+    const response = await request(app)
+        .post("/api/auth/login")
+        .send({
+            email: "test@test.com",
+            password: password
+        });
+
+    expect(response.statusCode).toBe(400);
+});
 
     afterAll((done) => {
         db.end(done);

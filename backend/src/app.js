@@ -11,20 +11,24 @@ app.use(express.json());
 // ================= REGISTER =================
 
 app.post("/api/auth/register", async (req, res) => {
+
     const { name, email, password, confirmPassword } = req.body;
 
+    // Required fields
     if (!name || !email || !password || !confirmPassword) {
         return res.status(400).json({
             message: "All fields are required"
         });
     }
 
+    // Confirm password
     if (password !== confirmPassword) {
         return res.status(400).json({
             message: "Passwords do not match"
         });
     }
 
+    // Name validation
     if (name.trim().length === 0) {
         return res.status(400).json({
             message: "Name cannot be empty"
@@ -51,6 +55,7 @@ app.post("/api/auth/register", async (req, res) => {
         });
     }
 
+    // Email validation
     if (email !== email.trim() || email.includes(" ")) {
         return res.status(400).json({
             message: "Email cannot contain spaces"
@@ -65,12 +70,14 @@ app.post("/api/auth/register", async (req, res) => {
         });
     }
 
+    // Password whitespace validation
     if (password !== password.trim()) {
         return res.status(400).json({
             message: "Password cannot start or end with spaces"
         });
     }
 
+    // Password length
     if (password.length < 6) {
         return res.status(400).json({
             message: "Password must be at least 6 characters"
@@ -83,6 +90,7 @@ app.post("/api/auth/register", async (req, res) => {
         });
     }
 
+    // Password strength
     const passwordRegex =
         /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
 
@@ -94,6 +102,7 @@ app.post("/api/auth/register", async (req, res) => {
     }
 
     try {
+
         const hashedPassword = await bcrypt.hash(password, 10);
 
         await db.promise().query(
@@ -125,20 +134,24 @@ app.post("/api/auth/register", async (req, res) => {
 // ================= LOGIN =================
 
 app.post("/api/auth/login", async (req, res) => {
+
     const { email, password } = req.body;
 
+    // Required fields
     if (!email || !password) {
         return res.status(400).json({
             message: "Email and password are required"
         });
     }
 
+    // Email spaces
     if (email !== email.trim() || email.includes(" ")) {
         return res.status(400).json({
             message: "Email cannot contain spaces"
         });
     }
 
+    // Email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!emailRegex.test(email)) {
@@ -147,14 +160,28 @@ app.post("/api/auth/login", async (req, res) => {
         });
     }
 
-    // NEW: Login password whitespace validation
+    // Password spaces
     if (password !== password.trim()) {
         return res.status(400).json({
             message: "Password cannot start or end with spaces"
         });
     }
 
+    // NEW: Login password length validation
+    if (password.length < 6) {
+        return res.status(400).json({
+            message: "Password must be at least 6 characters"
+        });
+    }
+
+    if (password.length > 50) {
+        return res.status(400).json({
+            message: "Password must not exceed 50 characters"
+        });
+    }
+
     try {
+
         const [rows] = await db.promise().query(
             "SELECT * FROM users WHERE email = ?",
             [email]
@@ -196,6 +223,7 @@ app.post("/api/auth/login", async (req, res) => {
         });
 
     } catch (error) {
+
         console.error(error);
 
         return res.status(500).json({
@@ -208,6 +236,7 @@ app.post("/api/auth/login", async (req, res) => {
 // ================= PROFILE =================
 
 app.get("/api/auth/profile", async (req, res) => {
+
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -219,6 +248,7 @@ app.get("/api/auth/profile", async (req, res) => {
     const token = authHeader.split(" ")[1];
 
     try {
+
         const decoded = jwt.verify(
             token,
             process.env.JWT_SECRET || "secretkey"
@@ -238,6 +268,7 @@ app.get("/api/auth/profile", async (req, res) => {
         return res.status(200).json(rows[0]);
 
     } catch (error) {
+
         return res.status(401).json({
             message: "Unauthorized"
         });
@@ -248,6 +279,7 @@ app.get("/api/auth/profile", async (req, res) => {
 // ================= LOGOUT =================
 
 app.post("/api/auth/logout", (req, res) => {
+
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -259,6 +291,7 @@ app.post("/api/auth/logout", (req, res) => {
     const token = authHeader.split(" ")[1];
 
     try {
+
         jwt.verify(
             token,
             process.env.JWT_SECRET || "secretkey"
@@ -269,6 +302,7 @@ app.post("/api/auth/logout", (req, res) => {
         });
 
     } catch (error) {
+
         return res.status(401).json({
             message: "Unauthorized"
         });
