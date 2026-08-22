@@ -10,7 +10,7 @@ describe("User Registration", () => {
             .post("/api/auth/register")
             .send({
                 name: "Kavya",
-                email: "kavya20260830@test.com",
+               email: "kavya20260831@test.com",
                 password: "123456"
             });
 
@@ -174,6 +174,21 @@ describe("User Registration", () => {
 
         expect(response.statusCode).toBe(200);
         expect(response.body.email).toBe(email);
+    });
+
+    test("should reject profile access without token", async () => {
+        const response = await request(app)
+            .get("/api/auth/profile");
+
+        expect(response.statusCode).toBe(401);
+    });
+
+    test("should reject profile access with invalid token", async () => {
+        const response = await request(app)
+            .get("/api/auth/profile")
+            .set("Authorization", "Bearer invalidtoken");
+
+        expect(response.statusCode).toBe(401);
     });
 
     afterAll((done) => {
