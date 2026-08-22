@@ -11,7 +11,7 @@ describe("User Registration", () => {
             .post("/api/auth/register")
             .send({
                 name: "Kavya",
-                email: "kavya20260904@test.com",
+                email: "kavya20260905@test.com",
                 password: "123456"
             });
 
@@ -249,12 +249,48 @@ describe("User Registration", () => {
         expect(response.body.password).toBeUndefined();
     });
 
-    test("should logout successfully", async () => {
+    test("should logout successfully with valid token", async () => {
+        const email = "logout@test.com";
+        const password = "123456";
+
+        await request(app)
+            .post("/api/auth/register")
+            .send({
+                name: "Logout User",
+                email: email,
+                password: password
+            });
+
+        const loginResponse = await request(app)
+            .post("/api/auth/login")
+            .send({
+                email: email,
+                password: password
+            });
+
+        const token = loginResponse.body.token;
+
         const response = await request(app)
-            .post("/api/auth/logout");
+            .post("/api/auth/logout")
+            .set("Authorization", `Bearer ${token}`);
 
         expect(response.statusCode).toBe(200);
         expect(response.body.message).toBe("Logout successful");
+    });
+
+    test("should reject logout without token", async () => {
+        const response = await request(app)
+            .post("/api/auth/logout");
+
+        expect(response.statusCode).toBe(401);
+    });
+
+    test("should reject logout with invalid token", async () => {
+        const response = await request(app)
+            .post("/api/auth/logout")
+            .set("Authorization", "Bearer invalidtoken");
+
+        expect(response.statusCode).toBe(401);
     });
 
     afterAll((done) => {

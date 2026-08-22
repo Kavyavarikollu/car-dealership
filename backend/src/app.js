@@ -7,6 +7,8 @@ const app = express();
 
 app.use(express.json());
 
+
+// REGISTER
 app.post("/api/auth/register", async (req, res) => {
     const { name, email, password } = req.body;
 
@@ -42,6 +44,8 @@ app.post("/api/auth/register", async (req, res) => {
     }
 });
 
+
+// LOGIN
 app.post("/api/auth/login", async (req, res) => {
     const { email, password } = req.body;
 
@@ -99,6 +103,8 @@ app.post("/api/auth/login", async (req, res) => {
     }
 });
 
+
+// PROTECTED PROFILE
 app.get("/api/auth/profile", async (req, res) => {
     const authHeader = req.headers.authorization;
 
@@ -136,10 +142,35 @@ app.get("/api/auth/profile", async (req, res) => {
     }
 });
 
+
+// LOGOUT
 app.post("/api/auth/logout", (req, res) => {
-    res.status(200).json({
-        message: "Logout successful"
-    });
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({
+            message: "Unauthorized"
+        });
+    }
+
+    const token = authHeader.split(" ")[1];
+
+    try {
+        jwt.verify(
+            token,
+            process.env.JWT_SECRET || "secretkey"
+        );
+
+        res.status(200).json({
+            message: "Logout successful"
+        });
+
+    } catch (error) {
+        return res.status(401).json({
+            message: "Unauthorized"
+        });
+    }
 });
+
 
 module.exports = app;
