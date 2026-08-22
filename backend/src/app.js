@@ -39,6 +39,15 @@ app.post("/api/auth/register", async (req, res) => {
         });
     }
 
+    // Name can contain letters, spaces and hyphens only
+    const nameRegex = /^[A-Za-z\s-]+$/;
+
+    if (!nameRegex.test(name.trim())) {
+        return res.status(400).json({
+            message: "Name contains invalid characters"
+        });
+    }
+
     // Reject email with spaces
     if (email !== email.trim() || email.includes(" ")) {
         return res.status(400).json({
