@@ -18,6 +18,13 @@ app.post("/api/auth/register", async (req, res) => {
         });
     }
 
+    // Validate name
+    if (name.trim().length === 0) {
+        return res.status(400).json({
+            message: "Name cannot be empty"
+        });
+    }
+
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
