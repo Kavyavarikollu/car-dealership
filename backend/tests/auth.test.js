@@ -763,6 +763,40 @@ test("should store registration email in lowercase", async () => {
     expect(rows.length).toBe(1);
     expect(rows[0].email).toBe(expectedEmail);
 });
+test("should reject profile with Bearer only", async () => {
+    const response = await request(app)
+        .get("/api/auth/profile")
+        .set("Authorization", "Bearer");
+
+    expect(response.statusCode).toBe(401);
+});
+
+
+test("should reject profile with empty Bearer token", async () => {
+    const response = await request(app)
+        .get("/api/auth/profile")
+        .set("Authorization", "Bearer ");
+
+    expect(response.statusCode).toBe(401);
+});
+
+
+test("should reject profile with Basic authorization", async () => {
+    const response = await request(app)
+        .get("/api/auth/profile")
+        .set("Authorization", "Basic abc123");
+
+    expect(response.statusCode).toBe(401);
+});
+
+
+test("should reject profile with extra authorization values", async () => {
+    const response = await request(app)
+        .get("/api/auth/profile")
+        .set("Authorization", "Bearer token extra");
+
+    expect(response.statusCode).toBe(401);
+});
 
     afterAll((done) => {
         db.end(done);

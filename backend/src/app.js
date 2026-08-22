@@ -68,7 +68,7 @@ app.post("/api/auth/register", async (req, res) => {
         });
     }
 
-    // NEW: normalize email
+    // Normalize email
     const normalizedEmail = email.toLowerCase();
 
     // Password validation
@@ -157,7 +157,7 @@ app.post("/api/auth/login", async (req, res) => {
         });
     }
 
-    // NEW: normalize login email
+    // Normalize email
     const normalizedEmail = email.toLowerCase();
 
     // Password whitespace validation
@@ -250,13 +250,27 @@ app.get("/api/auth/profile", async (req, res) => {
 
     const authHeader = req.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    // Check authorization header exists
+    if (!authHeader) {
         return res.status(401).json({
             message: "Unauthorized"
         });
     }
 
-    const token = authHeader.split(" ")[1];
+    // Check exact Bearer token format
+    const parts = authHeader.split(" ");
+
+    if (
+        parts.length !== 2 ||
+        parts[0] !== "Bearer" ||
+        !parts[1]
+    ) {
+        return res.status(401).json({
+            message: "Unauthorized"
+        });
+    }
+
+    const token = parts[1];
 
     try {
 
@@ -293,13 +307,27 @@ app.post("/api/auth/logout", (req, res) => {
 
     const authHeader = req.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    // Check authorization header exists
+    if (!authHeader) {
         return res.status(401).json({
             message: "Unauthorized"
         });
     }
 
-    const token = authHeader.split(" ")[1];
+    // Check exact Bearer token format
+    const parts = authHeader.split(" ");
+
+    if (
+        parts.length !== 2 ||
+        parts[0] !== "Bearer" ||
+        !parts[1]
+    ) {
+        return res.status(401).json({
+            message: "Unauthorized"
+        });
+    }
+
+    const token = parts[1];
 
     try {
 
