@@ -8,13 +8,22 @@ const app = express();
 app.use(express.json());
 
 
-// REGISTER
-app.post("/api/auth/register", async (req, res) => {
-    const { name, email, password } = req.body;
+// ================= REGISTER =================
 
-    if (!name || !email || !password) {
+app.post("/api/auth/register", async (req, res) => {
+    const { name, email, password, confirmPassword } = req.body;
+
+    // Required fields
+    if (!name || !email || !password || !confirmPassword) {
         return res.status(400).json({
             message: "All fields are required"
+        });
+    }
+
+    // Confirm password
+    if (password !== confirmPassword) {
+        return res.status(400).json({
+            message: "Passwords do not match"
         });
     }
 
@@ -60,7 +69,7 @@ app.post("/api/auth/register", async (req, res) => {
         });
     }
 
-    // Password whitespace validation
+    // Password cannot start/end with spaces
     if (password !== password.trim()) {
         return res.status(400).json({
             message: "Password cannot start or end with spaces"
@@ -81,11 +90,13 @@ app.post("/api/auth/register", async (req, res) => {
     }
 
     // Password strength
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
+    const passwordRegex =
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
 
     if (!passwordRegex.test(password)) {
         return res.status(400).json({
-            message: "Password must contain uppercase, lowercase and number"
+            message:
+                "Password must contain uppercase, lowercase and number"
         });
     }
 
@@ -97,25 +108,29 @@ app.post("/api/auth/register", async (req, res) => {
             [name.trim(), email, hashedPassword]
         );
 
-        res.status(201).json({
+        return res.status(201).json({
             message: "User registered successfully"
         });
 
     } catch (error) {
+
         if (error.code === "ER_DUP_ENTRY") {
             return res.status(409).json({
                 message: "Email already exists"
             });
         }
 
-        res.status(500).json({
+        console.error(error);
+
+        return res.status(500).json({
             message: "Registration failed"
         });
     }
 });
 
 
-// LOGIN
+// ================= LOGIN =================
+
 app.post("/api/auth/login", async (req, res) => {
     const { email, password } = req.body;
 
@@ -153,12 +168,12 @@ app.post("/api/auth/login", async (req, res) => {
 
         const user = rows[0];
 
-        const isPasswordCorrect = await bcrypt.compare(
+        const passwordCorrect = await bcrypt.compare(
             password,
             user.password
         );
 
-        if (!isPasswordCorrect) {
+        if (!passwordCorrect) {
             return res.status(401).json({
                 message: "Invalid email or password"
             });
@@ -175,20 +190,23 @@ app.post("/api/auth/login", async (req, res) => {
             }
         );
 
-        res.status(200).json({
+        return res.status(200).json({
             message: "Login successful",
             token: token
         });
 
     } catch (error) {
-        res.status(500).json({
+        console.error(error);
+
+        return res.status(500).json({
             message: "Login failed"
         });
     }
 });
 
 
-// PROFILE
+// ================= PROFILE =================
+
 app.get("/api/auth/profile", async (req, res) => {
     const authHeader = req.headers.authorization;
 
@@ -217,7 +235,7 @@ app.get("/api/auth/profile", async (req, res) => {
             });
         }
 
-        res.status(200).json(rows[0]);
+        return res.status(200).json(rows[0]);
 
     } catch (error) {
         return res.status(401).json({
@@ -227,7 +245,8 @@ app.get("/api/auth/profile", async (req, res) => {
 });
 
 
-// LOGOUT
+// ================= LOGOUT =================
+
 app.post("/api/auth/logout", (req, res) => {
     const authHeader = req.headers.authorization;
 
@@ -245,7 +264,7 @@ app.post("/api/auth/logout", (req, res) => {
             process.env.JWT_SECRET || "secretkey"
         );
 
-        res.status(200).json({
+        return res.status(200).json({
             message: "Logout successful"
         });
 
