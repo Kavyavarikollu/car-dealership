@@ -8,11 +8,109 @@ const app = express();
 app.use(express.json());
 
 
-// ================= REGISTER =================
+// =====================================================
+// AUTHENTICATION MIDDLEWARE
+// =====================================================
+
+function authenticateToken(req, res, next) {
+
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({
+            message: "Unauthorized"
+        });
+    }
+
+    const parts = authHeader.split(" ");
+
+    if (parts.length !== 2 || !parts[1]) {
+        return res.status(401).json({
+            message: "Unauthorized"
+        });
+    }
+
+    try {
+
+        const decoded = jwt.verify(
+            parts[1],
+            process.env.JWT_SECRET || "secretkey"
+        );
+
+        if (
+            !decoded.id ||
+            !decoded.email ||
+            typeof decoded.id !== "number" ||
+            decoded.id <= 0
+        ) {
+            return res.status(401).json({
+                message: "Unauthorized"
+            });
+        }
+
+        req.user = decoded;
+
+        next();
+
+    } catch (error) {
+
+        return res.status(401).json({
+            message: "Unauthorized"
+        });
+    }
+}
+
+
+// =====================================================
+// ADMIN MIDDLEWARE
+// =====================================================
+
+async function requireAdmin(req, res, next) {
+
+    try {
+
+        const [rows] = await db.promise().query(
+            "SELECT role FROM users WHERE id = ?",
+            [req.user.id]
+        );
+
+        if (rows.length === 0) {
+            return res.status(401).json({
+                message: "Unauthorized"
+            });
+        }
+
+        if (rows[0].role !== "admin") {
+            return res.status(403).json({
+                message: "Admin access required"
+            });
+        }
+
+        next();
+
+    } catch (error) {
+
+        console.error(error);
+
+        return res.status(500).json({
+            message: "Authorization failed"
+        });
+    }
+}
+
+
+// =====================================================
+// REGISTER
+// =====================================================
 
 app.post("/api/auth/register", async (req, res) => {
 
-    const { name, email, password, confirmPassword } = req.body;
+    const {
+        name,
+        email,
+        password,
+        confirmPassword
+    } = req.body;
 
     if (!name || !email || !password || !confirmPassword) {
         return res.status(400).json({
@@ -66,8 +164,6 @@ app.post("/api/auth/register", async (req, res) => {
         });
     }
 
-    const normalizedEmail = email.toLowerCase();
-
     if (password !== password.trim()) {
         return res.status(400).json({
             message: "Password cannot start or end with spaces"
@@ -98,11 +194,18 @@ app.post("/api/auth/register", async (req, res) => {
 
     try {
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const normalizedEmail = email.toLowerCase();
+
+        const hashedPassword =
+            await bcrypt.hash(password, 10);
 
         await db.promise().query(
             "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
-            [name.trim(), normalizedEmail, hashedPassword]
+            [
+                name.trim(),
+                normalizedEmail,
+                hashedPassword
+            ]
         );
 
         return res.status(201).json({
@@ -126,11 +229,16 @@ app.post("/api/auth/register", async (req, res) => {
 });
 
 
-// ================= LOGIN =================
+// =====================================================
+// LOGIN
+// =====================================================
 
 app.post("/api/auth/login", async (req, res) => {
 
-    const { email, password } = req.body;
+    const {
+        email,
+        password
+    } = req.body;
 
     if (!email || !password) {
         return res.status(400).json({
@@ -152,8 +260,6 @@ app.post("/api/auth/login", async (req, res) => {
         });
     }
 
-    const normalizedEmail = email.toLowerCase();
-
     if (password !== password.trim()) {
         return res.status(400).json({
             message: "Password cannot start or end with spaces"
@@ -172,10 +278,7 @@ app.post("/api/auth/login", async (req, res) => {
         });
     }
 
-    const passwordRegex =
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
-
-    if (!passwordRegex.test(password)) {
+    if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/.test(password)) {
         return res.status(400).json({
             message:
                 "Password must contain uppercase, lowercase and number"
@@ -183,6 +286,8 @@ app.post("/api/auth/login", async (req, res) => {
     }
 
     try {
+
+        const normalizedEmail = email.toLowerCase();
 
         const [rows] = await db.promise().query(
             "SELECT * FROM users WHERE email = ?",
@@ -197,10 +302,11 @@ app.post("/api/auth/login", async (req, res) => {
 
         const user = rows[0];
 
-        const passwordCorrect = await bcrypt.compare(
-            password,
-            user.password
-        );
+        const passwordCorrect =
+            await bcrypt.compare(
+                password,
+                user.password
+            );
 
         if (!passwordCorrect) {
             return res.status(401).json({
@@ -235,139 +341,595 @@ app.post("/api/auth/login", async (req, res) => {
 });
 
 
-// ================= PROFILE =================
+// =====================================================
+// PROFILE
+// =====================================================
 
-app.get("/api/auth/profile", async (req, res) => {
+app.get(
+    "/api/auth/profile",
+    authenticateToken,
+    async (req, res) => {
 
-    const authHeader = req.headers.authorization;
+        try {
 
-    if (!authHeader) {
-        return res.status(401).json({
-            message: "Unauthorized"
-        });
-    }
+            const [rows] = await db.promise().query(
+                "SELECT id, name, email FROM users WHERE id = ?",
+                [req.user.id]
+            );
 
-    const parts = authHeader.split(" ");
+            if (rows.length === 0) {
+                return res.status(401).json({
+                    message: "Unauthorized"
+                });
+            }
 
-    if (
-        parts.length !== 2 ||
-        parts[0] !== "Bearer" ||
-        !parts[1]
-    ) {
-        return res.status(401).json({
-            message: "Unauthorized"
-        });
-    }
+            return res.status(200).json(rows[0]);
 
-    const token = parts[1];
+        } catch (error) {
 
-    try {
-
-        const decoded = jwt.verify(
-            token,
-            process.env.JWT_SECRET || "secretkey"
-        );
-
-        // NEW: Validate JWT payload
-        if (
-            !decoded ||
-            decoded.id === undefined ||
-            decoded.id === null ||
-            decoded.email === undefined ||
-            decoded.email === null
-        ) {
             return res.status(401).json({
                 message: "Unauthorized"
             });
         }
-
-        // Validate user id
-        if (
-            typeof decoded.id !== "number" ||
-            !Number.isInteger(decoded.id) ||
-            decoded.id <= 0
-        ) {
-            return res.status(401).json({
-                message: "Unauthorized"
-            });
-        }
-
-        // Validate email
-        if (
-            typeof decoded.email !== "string" ||
-            decoded.email.trim() === ""
-        ) {
-            return res.status(401).json({
-                message: "Unauthorized"
-            });
-        }
-
-        const [rows] = await db.promise().query(
-            "SELECT id, name, email FROM users WHERE id = ?",
-            [decoded.id]
-        );
-
-        if (rows.length === 0) {
-            return res.status(401).json({
-                message: "Unauthorized"
-            });
-        }
-
-        return res.status(200).json(rows[0]);
-
-    } catch (error) {
-
-        return res.status(401).json({
-            message: "Unauthorized"
-        });
     }
-});
+);
 
 
-// ================= LOGOUT =================
+// =====================================================
+// LOGOUT
+// =====================================================
 
-app.post("/api/auth/logout", (req, res) => {
-
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader) {
-        return res.status(401).json({
-            message: "Unauthorized"
-        });
-    }
-
-    const parts = authHeader.split(" ");
-
-    if (
-        parts.length !== 2 ||
-        parts[0] !== "Bearer" ||
-        !parts[1]
-    ) {
-        return res.status(401).json({
-            message: "Unauthorized"
-        });
-    }
-
-    const token = parts[1];
-
-    try {
-
-        jwt.verify(
-            token,
-            process.env.JWT_SECRET || "secretkey"
-        );
+app.post(
+    "/api/auth/logout",
+    authenticateToken,
+    (req, res) => {
 
         return res.status(200).json({
             message: "Logout successful"
         });
-
-    } catch (error) {
-
-        return res.status(401).json({
-            message: "Unauthorized"
-        });
     }
-});
+);
+
+
+// =====================================================
+// ADD VEHICLE
+// =====================================================
+
+app.post(
+    "/api/vehicles",
+    authenticateToken,
+    async (req, res) => {
+
+        const {
+            make,
+            model,
+            category,
+            price,
+            quantity
+        } = req.body;
+
+        if (
+            !make ||
+            !model ||
+            !category ||
+            price === undefined ||
+            quantity === undefined
+        ) {
+            return res.status(400).json({
+                message: "All vehicle fields are required"
+            });
+        }
+
+        if (
+            typeof price !== "number" ||
+            price <= 0
+        ) {
+            return res.status(400).json({
+                message: "Price must be greater than 0"
+            });
+        }
+
+        if (
+            typeof quantity !== "number" ||
+            quantity < 0 ||
+            !Number.isInteger(quantity)
+        ) {
+            return res.status(400).json({
+                message: "Quantity must be a non-negative integer"
+            });
+        }
+
+        try {
+
+            const [result] =
+                await db.promise().query(
+                    `INSERT INTO vehicles
+                    (make, model, category, price, quantity)
+                    VALUES (?, ?, ?, ?, ?)`,
+                    [
+                        make.trim(),
+                        model.trim(),
+                        category.trim(),
+                        price,
+                        quantity
+                    ]
+                );
+
+            const [rows] =
+                await db.promise().query(
+                    "SELECT * FROM vehicles WHERE id = ?",
+                    [result.insertId]
+                );
+
+            return res.status(201).json({
+                message: "Vehicle added successfully",
+                vehicle: rows[0]
+            });
+
+        } catch (error) {
+
+            console.error(error);
+
+            return res.status(500).json({
+                message: "Failed to add vehicle"
+            });
+        }
+    }
+);
+
+
+// =====================================================
+// GET ALL AVAILABLE VEHICLES
+// =====================================================
+
+app.get(
+    "/api/vehicles",
+    authenticateToken,
+    async (req, res) => {
+
+        try {
+
+            const [rows] =
+                await db.promise().query(
+                    `SELECT * FROM vehicles
+                     WHERE quantity > 0
+                     ORDER BY id DESC`
+                );
+
+            return res.status(200).json(rows);
+
+        } catch (error) {
+
+            console.error(error);
+
+            return res.status(500).json({
+                message: "Failed to fetch vehicles"
+            });
+        }
+    }
+);
+
+
+// =====================================================
+// SEARCH VEHICLES
+// =====================================================
+
+app.get(
+    "/api/vehicles/search",
+    authenticateToken,
+    async (req, res) => {
+
+        const {
+            make,
+            model,
+            category,
+            minPrice,
+            maxPrice
+        } = req.query;
+
+        let query = `
+            SELECT * FROM vehicles
+            WHERE quantity > 0
+        `;
+
+        const values = [];
+
+        if (make) {
+            query += " AND LOWER(make) LIKE LOWER(?)";
+            values.push(`%${make}%`);
+        }
+
+        if (model) {
+            query += " AND LOWER(model) LIKE LOWER(?)";
+            values.push(`%${model}%`);
+        }
+
+        if (category) {
+            query += " AND LOWER(category) LIKE LOWER(?)";
+            values.push(`%${category}%`);
+        }
+
+        if (minPrice !== undefined) {
+
+            const minimum = Number(minPrice);
+
+            if (Number.isNaN(minimum) || minimum < 0) {
+                return res.status(400).json({
+                    message: "Invalid minimum price"
+                });
+            }
+
+            query += " AND price >= ?";
+            values.push(minimum);
+        }
+
+        if (maxPrice !== undefined) {
+
+            const maximum = Number(maxPrice);
+
+            if (Number.isNaN(maximum) || maximum < 0) {
+                return res.status(400).json({
+                    message: "Invalid maximum price"
+                });
+            }
+
+            query += " AND price <= ?";
+            values.push(maximum);
+        }
+
+        if (
+            minPrice !== undefined &&
+            maxPrice !== undefined &&
+            Number(minPrice) > Number(maxPrice)
+        ) {
+            return res.status(400).json({
+                message: "Minimum price cannot exceed maximum price"
+            });
+        }
+
+        query += " ORDER BY id DESC";
+
+        try {
+
+            const [rows] =
+                await db.promise().query(
+                    query,
+                    values
+                );
+
+            return res.status(200).json(rows);
+
+        } catch (error) {
+
+            console.error(error);
+
+            return res.status(500).json({
+                message: "Vehicle search failed"
+            });
+        }
+    }
+);
+
+
+// =====================================================
+// UPDATE VEHICLE
+// =====================================================
+
+app.put(
+    "/api/vehicles/:id",
+    authenticateToken,
+    async (req, res) => {
+
+        const vehicleId = Number(req.params.id);
+
+        if (
+            !Number.isInteger(vehicleId) ||
+            vehicleId <= 0
+        ) {
+            return res.status(400).json({
+                message: "Invalid vehicle ID"
+            });
+        }
+
+        const {
+            make,
+            model,
+            category,
+            price,
+            quantity
+        } = req.body;
+
+        if (
+            !make ||
+            !model ||
+            !category ||
+            price === undefined ||
+            quantity === undefined
+        ) {
+            return res.status(400).json({
+                message: "All vehicle fields are required"
+            });
+        }
+
+        if (
+            typeof price !== "number" ||
+            price <= 0
+        ) {
+            return res.status(400).json({
+                message: "Price must be greater than 0"
+            });
+        }
+
+        if (
+            typeof quantity !== "number" ||
+            quantity < 0 ||
+            !Number.isInteger(quantity)
+        ) {
+            return res.status(400).json({
+                message: "Quantity must be a non-negative integer"
+            });
+        }
+
+        try {
+
+            const [existing] =
+                await db.promise().query(
+                    "SELECT id FROM vehicles WHERE id = ?",
+                    [vehicleId]
+                );
+
+            if (existing.length === 0) {
+                return res.status(404).json({
+                    message: "Vehicle not found"
+                });
+            }
+
+            await db.promise().query(
+                `UPDATE vehicles
+                 SET make = ?,
+                     model = ?,
+                     category = ?,
+                     price = ?,
+                     quantity = ?
+                 WHERE id = ?`,
+                [
+                    make.trim(),
+                    model.trim(),
+                    category.trim(),
+                    price,
+                    quantity,
+                    vehicleId
+                ]
+            );
+
+            const [rows] =
+                await db.promise().query(
+                    "SELECT * FROM vehicles WHERE id = ?",
+                    [vehicleId]
+                );
+
+            return res.status(200).json({
+                message: "Vehicle updated successfully",
+                vehicle: rows[0]
+            });
+
+        } catch (error) {
+
+            console.error(error);
+
+            return res.status(500).json({
+                message: "Failed to update vehicle"
+            });
+        }
+    }
+);
+
+
+// =====================================================
+// PURCHASE VEHICLE
+// =====================================================
+
+app.post(
+    "/api/vehicles/:id/purchase",
+    authenticateToken,
+    async (req, res) => {
+
+        const vehicleId = Number(req.params.id);
+
+        if (
+            !Number.isInteger(vehicleId) ||
+            vehicleId <= 0
+        ) {
+            return res.status(400).json({
+                message: "Invalid vehicle ID"
+            });
+        }
+
+        try {
+
+            const [rows] =
+                await db.promise().query(
+                    "SELECT * FROM vehicles WHERE id = ?",
+                    [vehicleId]
+                );
+
+            if (rows.length === 0) {
+                return res.status(404).json({
+                    message: "Vehicle not found"
+                });
+            }
+
+            const vehicle = rows[0];
+
+            if (vehicle.quantity <= 0) {
+                return res.status(400).json({
+                    message: "Vehicle is out of stock"
+                });
+            }
+
+            await db.promise().query(
+                `UPDATE vehicles
+                 SET quantity = quantity - 1
+                 WHERE id = ? AND quantity > 0`,
+                [vehicleId]
+            );
+
+            const [updatedRows] =
+                await db.promise().query(
+                    "SELECT * FROM vehicles WHERE id = ?",
+                    [vehicleId]
+                );
+
+            return res.status(200).json({
+                message: "Vehicle purchased successfully",
+                vehicle: updatedRows[0]
+            });
+
+        } catch (error) {
+
+            console.error(error);
+
+            return res.status(500).json({
+                message: "Purchase failed"
+            });
+        }
+    }
+);
+
+
+// =====================================================
+// DELETE VEHICLE - ADMIN ONLY
+// =====================================================
+
+app.delete(
+    "/api/vehicles/:id",
+    authenticateToken,
+    requireAdmin,
+    async (req, res) => {
+
+        const vehicleId = Number(req.params.id);
+
+        if (
+            !Number.isInteger(vehicleId) ||
+            vehicleId <= 0
+        ) {
+            return res.status(400).json({
+                message: "Invalid vehicle ID"
+            });
+        }
+
+        try {
+
+            const [rows] =
+                await db.promise().query(
+                    "SELECT id FROM vehicles WHERE id = ?",
+                    [vehicleId]
+                );
+
+            if (rows.length === 0) {
+                return res.status(404).json({
+                    message: "Vehicle not found"
+                });
+            }
+
+            await db.promise().query(
+                "DELETE FROM vehicles WHERE id = ?",
+                [vehicleId]
+            );
+
+            return res.status(200).json({
+                message: "Vehicle deleted successfully"
+            });
+
+        } catch (error) {
+
+            console.error(error);
+
+            return res.status(500).json({
+                message: "Failed to delete vehicle"
+            });
+        }
+    }
+);
+
+
+// =====================================================
+// RESTOCK VEHICLE - ADMIN ONLY
+// =====================================================
+
+app.post(
+    "/api/vehicles/:id/restock",
+    authenticateToken,
+    requireAdmin,
+    async (req, res) => {
+
+        const vehicleId = Number(req.params.id);
+
+        const { quantity } = req.body;
+
+        if (
+            !Number.isInteger(quantity) ||
+            quantity <= 0
+        ) {
+            return res.status(400).json({
+                message: "Quantity must be a positive integer"
+            });
+        }
+
+        if (
+            !Number.isInteger(vehicleId) ||
+            vehicleId <= 0
+        ) {
+            return res.status(400).json({
+                message: "Invalid vehicle ID"
+            });
+        }
+
+        try {
+
+            const [rows] =
+                await db.promise().query(
+                    "SELECT id FROM vehicles WHERE id = ?",
+                    [vehicleId]
+                );
+
+            if (rows.length === 0) {
+                return res.status(404).json({
+                    message: "Vehicle not found"
+                });
+            }
+
+            await db.promise().query(
+                `UPDATE vehicles
+                 SET quantity = quantity + ?
+                 WHERE id = ?`,
+                [
+                    quantity,
+                    vehicleId
+                ]
+            );
+
+            const [updatedRows] =
+                await db.promise().query(
+                    "SELECT * FROM vehicles WHERE id = ?",
+                    [vehicleId]
+                );
+
+            return res.status(200).json({
+                message: "Vehicle restocked successfully",
+                vehicle: updatedRows[0]
+            });
+
+        } catch (error) {
+
+            console.error(error);
+
+            return res.status(500).json({
+                message: "Restock failed"
+            });
+        }
+    }
+);
 
 
 module.exports = app;
