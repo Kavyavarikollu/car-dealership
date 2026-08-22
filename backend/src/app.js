@@ -26,7 +26,6 @@ app.post("/api/auth/register", async (req, res) => {
         });
     }
 
-    // Name validation
     if (name.trim().length === 0) {
         return res.status(400).json({
             message: "Name cannot be empty"
@@ -53,7 +52,6 @@ app.post("/api/auth/register", async (req, res) => {
         });
     }
 
-    // Email validation
     if (email !== email.trim() || email.includes(" ")) {
         return res.status(400).json({
             message: "Email cannot contain spaces"
@@ -68,10 +66,8 @@ app.post("/api/auth/register", async (req, res) => {
         });
     }
 
-    // Normalize email
     const normalizedEmail = email.toLowerCase();
 
-    // Password validation
     if (password !== password.trim()) {
         return res.status(400).json({
             message: "Password cannot start or end with spaces"
@@ -142,7 +138,6 @@ app.post("/api/auth/login", async (req, res) => {
         });
     }
 
-    // Email validation
     if (email !== email.trim() || email.includes(" ")) {
         return res.status(400).json({
             message: "Email cannot contain spaces"
@@ -157,17 +152,14 @@ app.post("/api/auth/login", async (req, res) => {
         });
     }
 
-    // Normalize email
     const normalizedEmail = email.toLowerCase();
 
-    // Password whitespace validation
     if (password !== password.trim()) {
         return res.status(400).json({
             message: "Password cannot start or end with spaces"
         });
     }
 
-    // Password length validation
     if (password.length < 6) {
         return res.status(400).json({
             message: "Password must be at least 6 characters"
@@ -180,7 +172,6 @@ app.post("/api/auth/login", async (req, res) => {
         });
     }
 
-    // Password strength validation
     const passwordRegex =
         /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
 
@@ -250,14 +241,12 @@ app.get("/api/auth/profile", async (req, res) => {
 
     const authHeader = req.headers.authorization;
 
-    // Check authorization header exists
     if (!authHeader) {
         return res.status(401).json({
             message: "Unauthorized"
         });
     }
 
-    // Check exact Bearer token format
     const parts = authHeader.split(" ");
 
     if (
@@ -278,6 +267,40 @@ app.get("/api/auth/profile", async (req, res) => {
             token,
             process.env.JWT_SECRET || "secretkey"
         );
+
+        // NEW: Validate JWT payload
+        if (
+            !decoded ||
+            decoded.id === undefined ||
+            decoded.id === null ||
+            decoded.email === undefined ||
+            decoded.email === null
+        ) {
+            return res.status(401).json({
+                message: "Unauthorized"
+            });
+        }
+
+        // Validate user id
+        if (
+            typeof decoded.id !== "number" ||
+            !Number.isInteger(decoded.id) ||
+            decoded.id <= 0
+        ) {
+            return res.status(401).json({
+                message: "Unauthorized"
+            });
+        }
+
+        // Validate email
+        if (
+            typeof decoded.email !== "string" ||
+            decoded.email.trim() === ""
+        ) {
+            return res.status(401).json({
+                message: "Unauthorized"
+            });
+        }
 
         const [rows] = await db.promise().query(
             "SELECT id, name, email FROM users WHERE id = ?",
@@ -307,14 +330,12 @@ app.post("/api/auth/logout", (req, res) => {
 
     const authHeader = req.headers.authorization;
 
-    // Check authorization header exists
     if (!authHeader) {
         return res.status(401).json({
             message: "Unauthorized"
         });
     }
 
-    // Check exact Bearer token format
     const parts = authHeader.split(" ");
 
     if (

@@ -797,6 +797,62 @@ test("should reject profile with extra authorization values", async () => {
 
     expect(response.statusCode).toBe(401);
 });
+test("should reject profile with JWT missing id", async () => {
+    const token = jwt.sign(
+        {
+            email: "test@test.com"
+        },
+        process.env.JWT_SECRET || "secretkey",
+        {
+            expiresIn: "1h"
+        }
+    );
+
+    const response = await request(app)
+        .get("/api/auth/profile")
+        .set("Authorization", `Bearer ${token}`);
+
+    expect(response.statusCode).toBe(401);
+});
+
+
+test("should reject profile with JWT missing email", async () => {
+    const token = jwt.sign(
+        {
+            id: 1
+        },
+        process.env.JWT_SECRET || "secretkey",
+        {
+            expiresIn: "1h"
+        }
+    );
+
+    const response = await request(app)
+        .get("/api/auth/profile")
+        .set("Authorization", `Bearer ${token}`);
+
+    expect(response.statusCode).toBe(401);
+});
+
+
+test("should reject profile with invalid JWT id", async () => {
+    const token = jwt.sign(
+        {
+            id: -1,
+            email: "test@test.com"
+        },
+        process.env.JWT_SECRET || "secretkey",
+        {
+            expiresIn: "1h"
+        }
+    );
+
+    const response = await request(app)
+        .get("/api/auth/profile")
+        .set("Authorization", `Bearer ${token}`);
+
+    expect(response.statusCode).toBe(401);
+});
 
     afterAll((done) => {
         db.end(done);
