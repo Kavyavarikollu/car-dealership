@@ -7,6 +7,7 @@ const app = express();
 
 app.use(express.json());
 
+// REGISTER
 app.post("/api/auth/register", async (req, res) => {
     const { name, email, password } = req.body;
 
@@ -27,6 +28,7 @@ app.post("/api/auth/register", async (req, res) => {
         res.status(201).json({
             message: "User registered successfully"
         });
+
     } catch (error) {
         if (error.code === "ER_DUP_ENTRY") {
             return res.status(409).json({
@@ -40,6 +42,7 @@ app.post("/api/auth/register", async (req, res) => {
     }
 });
 
+// LOGIN
 app.post("/api/auth/login", async (req, res) => {
     const { email, password } = req.body;
 
@@ -93,6 +96,36 @@ app.post("/api/auth/login", async (req, res) => {
     } catch (error) {
         res.status(500).json({
             message: "Login failed"
+        });
+    }
+});
+
+// PROTECTED PROFILE
+app.get("/api/auth/profile", (req, res) => {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader) {
+        return res.status(401).json({
+            message: "Token required"
+        });
+    }
+
+    const token = authHeader.split(" ")[1];
+
+    try {
+        const decoded = jwt.verify(
+            token,
+            process.env.JWT_SECRET || "secretkey"
+        );
+
+        res.status(200).json({
+            id: decoded.id,
+            email: decoded.email
+        });
+
+    } catch (error) {
+        res.status(401).json({
+            message: "Invalid token"
         });
     }
 });
