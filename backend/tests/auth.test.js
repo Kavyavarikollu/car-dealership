@@ -11,7 +11,7 @@ describe("User Registration", () => {
             .post("/api/auth/register")
             .send({
                 name: "Kavya",
-                email: "kavya20260906@test.com",
+                email: "kavya20260907@test.com",
                 password: "123456"
             });
 
@@ -23,6 +23,18 @@ describe("User Registration", () => {
             .post("/api/auth/register")
             .send({
                 name: "Kavya",
+                password: "123456"
+            });
+
+        expect(response.statusCode).toBe(400);
+    });
+
+    test("should reject registration with invalid email", async () => {
+        const response = await request(app)
+            .post("/api/auth/register")
+            .send({
+                name: "Kavya",
+                email: "kavya2026",
                 password: "123456"
             });
 

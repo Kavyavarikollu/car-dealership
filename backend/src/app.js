@@ -18,6 +18,15 @@ app.post("/api/auth/register", async (req, res) => {
         });
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(email)) {
+        return res.status(400).json({
+            message: "Invalid email format"
+        });
+    }
+
     // Password must be at least 6 characters
     if (password.length < 6) {
         return res.status(400).json({
