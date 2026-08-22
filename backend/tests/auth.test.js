@@ -2,6 +2,7 @@ const request = require("supertest");
 const app = require("../src/app");
 const db = require("../src/db");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 describe("User Registration", () => {
 
@@ -10,7 +11,7 @@ describe("User Registration", () => {
             .post("/api/auth/register")
             .send({
                 name: "Kavya",
-               email: "kavya20260831@test.com",
+            email: "kavya20260901@test.com",
                 password: "123456"
             });
 
@@ -187,6 +188,25 @@ describe("User Registration", () => {
         const response = await request(app)
             .get("/api/auth/profile")
             .set("Authorization", "Bearer invalidtoken");
+
+        expect(response.statusCode).toBe(401);
+    });
+
+    test("should reject expired token", async () => {
+        const token = jwt.sign(
+            {
+                id: 1,
+                email: "expired@test.com"
+            },
+            process.env.JWT_SECRET || "secretkey",
+            {
+                expiresIn: "-1s"
+            }
+        );
+
+        const response = await request(app)
+            .get("/api/auth/profile")
+            .set("Authorization", `Bearer ${token}`);
 
         expect(response.statusCode).toBe(401);
     });
