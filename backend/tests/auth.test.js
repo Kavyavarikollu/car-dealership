@@ -163,6 +163,18 @@ describe("User Registration", () => {
         expect(response.statusCode).toBe(400);
     });
 
+    test("should reject registration with password containing leading or trailing spaces", async () => {
+        const response = await request(app)
+            .post("/api/auth/register")
+            .send({
+                name: "Kavya",
+                email: "passwordspace@test.com",
+                password: " Kavya123 "
+            });
+
+        expect(response.statusCode).toBe(400);
+    });
+
     test("should save the user in the database", async () => {
         const email = `database_${Date.now()}@test.com`;
 

@@ -18,6 +18,7 @@ app.post("/api/auth/register", async (req, res) => {
         });
     }
 
+    // Name validation
     if (name.trim().length === 0) {
         return res.status(400).json({
             message: "Name cannot be empty"
@@ -44,6 +45,7 @@ app.post("/api/auth/register", async (req, res) => {
         });
     }
 
+    // Email validation
     if (email !== email.trim() || email.includes(" ")) {
         return res.status(400).json({
             message: "Email cannot contain spaces"
@@ -58,6 +60,14 @@ app.post("/api/auth/register", async (req, res) => {
         });
     }
 
+    // Password whitespace validation
+    if (password !== password.trim()) {
+        return res.status(400).json({
+            message: "Password cannot start or end with spaces"
+        });
+    }
+
+    // Password length
     if (password.length < 6) {
         return res.status(400).json({
             message: "Password must be at least 6 characters"
@@ -70,6 +80,7 @@ app.post("/api/auth/register", async (req, res) => {
         });
     }
 
+    // Password strength
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
 
     if (!passwordRegex.test(password)) {
