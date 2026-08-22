@@ -7,7 +7,6 @@ const app = express();
 
 app.use(express.json());
 
-// REGISTER
 app.post("/api/auth/register", async (req, res) => {
     const { name, email, password } = req.body;
 
@@ -30,6 +29,7 @@ app.post("/api/auth/register", async (req, res) => {
         });
 
     } catch (error) {
+
         if (error.code === "ER_DUP_ENTRY") {
             return res.status(409).json({
                 message: "Email already exists"
@@ -42,7 +42,6 @@ app.post("/api/auth/register", async (req, res) => {
     }
 });
 
-// LOGIN
 app.post("/api/auth/login", async (req, res) => {
     const { email, password } = req.body;
 
@@ -100,13 +99,12 @@ app.post("/api/auth/login", async (req, res) => {
     }
 });
 
-// PROTECTED PROFILE
-app.get("/api/auth/profile", (req, res) => {
+app.get("/api/auth/profile", async (req, res) => {
     const authHeader = req.headers.authorization;
 
-    if (!authHeader) {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
         return res.status(401).json({
-            message: "Token required"
+            message: "Unauthorized"
         });
     }
 
@@ -118,16 +116,30 @@ app.get("/api/auth/profile", (req, res) => {
             process.env.JWT_SECRET || "secretkey"
         );
 
-        res.status(200).json({
-            id: decoded.id,
-            email: decoded.email
-        });
+        const [rows] = await db.promise().query(
+            "SELECT id, name, email FROM users WHERE id = ?",
+            [decoded.id]
+        );
+
+        if (rows.length === 0) {
+            return res.status(401).json({
+                message: "Unauthorized"
+            });
+        }
+
+        res.status(200).json(rows[0]);
 
     } catch (error) {
-        res.status(401).json({
-            message: "Invalid token"
+        return res.status(401).json({
+            message: "Unauthorized"
         });
     }
+});
+
+app.post("/api/auth/logout", (req, res) => {
+    res.status(200).json({
+        message: "Logout successful"
+    });
 });
 
 module.exports = app;

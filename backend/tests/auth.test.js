@@ -11,7 +11,7 @@ describe("User Registration", () => {
             .post("/api/auth/register")
             .send({
                 name: "Kavya",
-                email: "kavya20260903@test.com",
+                email: "kavya20260904@test.com",
                 password: "123456"
             });
 
@@ -247,6 +247,14 @@ describe("User Registration", () => {
         expect(response.statusCode).toBe(200);
         expect(response.body.email).toBe(email);
         expect(response.body.password).toBeUndefined();
+    });
+
+    test("should logout successfully", async () => {
+        const response = await request(app)
+            .post("/api/auth/logout");
+
+        expect(response.statusCode).toBe(200);
+        expect(response.body.message).toBe("Logout successful");
     });
 
     afterAll((done) => {
