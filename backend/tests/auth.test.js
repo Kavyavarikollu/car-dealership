@@ -853,6 +853,31 @@ test("should reject profile with invalid JWT id", async () => {
 
     expect(response.statusCode).toBe(401);
 });
+test("should reject logout with Bearer only", async () => {
+    const response = await request(app)
+        .post("/api/auth/logout")
+        .set("Authorization", "Bearer");
+
+    expect(response.statusCode).toBe(401);
+});
+
+
+test("should reject logout with Basic authorization", async () => {
+    const response = await request(app)
+        .post("/api/auth/logout")
+        .set("Authorization", "Basic abc123");
+
+    expect(response.statusCode).toBe(401);
+});
+
+
+test("should reject logout with invalid JWT", async () => {
+    const response = await request(app)
+        .post("/api/auth/logout")
+        .set("Authorization", "Bearer invalid.jwt.token");
+
+    expect(response.statusCode).toBe(401);
+});
 
     afterAll((done) => {
         db.end(done);
