@@ -13,4 +13,15 @@ describe("User Registration", () => {
 
         expect(response.statusCode).toBe(201);
     });
+
+    test("should reject registration when email is missing", async () => {
+        const response = await request(app)
+            .post("/api/auth/register")
+            .send({
+                name: "Kavya",
+                password: "123456"
+            });
+
+        expect(response.statusCode).toBe(400);
+    });
 });
