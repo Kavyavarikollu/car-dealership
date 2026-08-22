@@ -18,6 +18,13 @@ app.post("/api/auth/register", async (req, res) => {
         });
     }
 
+    // Password must be at least 6 characters
+    if (password.length < 6) {
+        return res.status(400).json({
+            message: "Password must be at least 6 characters"
+        });
+    }
+
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -104,7 +111,7 @@ app.post("/api/auth/login", async (req, res) => {
 });
 
 
-// PROTECTED PROFILE
+// PROFILE
 app.get("/api/auth/profile", async (req, res) => {
     const authHeader = req.headers.authorization;
 
