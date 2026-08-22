@@ -682,7 +682,87 @@ describe("User Registration", () => {
 
         expect(response.statusCode).toBe(401);
     });
+test("should login with uppercase email", async () => {
+    const email = `uppercase_${Date.now()}@test.com`;
+    const password = "Kavya123";
 
+    const registerResponse = await request(app)
+        .post("/api/auth/register")
+        .send({
+            name: "Uppercase User",
+            email: email,
+            password: password,
+            confirmPassword: password
+        });
+
+    expect(registerResponse.statusCode).toBe(201);
+
+    const response = await request(app)
+        .post("/api/auth/login")
+        .send({
+            email: email.toUpperCase(),
+            password: password
+        });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body.token).toBeDefined();
+});
+
+
+test("should login with mixed case email", async () => {
+    const email = `mixedcase_${Date.now()}@test.com`;
+    const password = "Kavya123";
+
+    const registerResponse = await request(app)
+        .post("/api/auth/register")
+        .send({
+            name: "Mixed Case User",
+            email: email,
+            password: password,
+            confirmPassword: password
+        });
+
+    expect(registerResponse.statusCode).toBe(201);
+
+    const mixedEmail =
+        email.substring(0, 5).toUpperCase() +
+        email.substring(5);
+
+    const response = await request(app)
+        .post("/api/auth/login")
+        .send({
+            email: mixedEmail,
+            password: password
+        });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body.token).toBeDefined();
+});
+
+
+test("should store registration email in lowercase", async () => {
+    const email = `LOWERCASE_${Date.now()}@TEST.COM`;
+    const expectedEmail = email.toLowerCase();
+
+    const response = await request(app)
+        .post("/api/auth/register")
+        .send({
+            name: "Lowercase User",
+            email: email,
+            password: "Kavya123",
+            confirmPassword: "Kavya123"
+        });
+
+    expect(response.statusCode).toBe(201);
+
+    const [rows] = await db.promise().query(
+        "SELECT email FROM users WHERE email = ?",
+        [expectedEmail]
+    );
+
+    expect(rows.length).toBe(1);
+    expect(rows[0].email).toBe(expectedEmail);
+});
 
     afterAll((done) => {
         db.end(done);

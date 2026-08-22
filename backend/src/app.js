@@ -68,6 +68,9 @@ app.post("/api/auth/register", async (req, res) => {
         });
     }
 
+    // NEW: normalize email
+    const normalizedEmail = email.toLowerCase();
+
     // Password validation
     if (password !== password.trim()) {
         return res.status(400).json({
@@ -103,7 +106,7 @@ app.post("/api/auth/register", async (req, res) => {
 
         await db.promise().query(
             "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
-            [name.trim(), email, hashedPassword]
+            [name.trim(), normalizedEmail, hashedPassword]
         );
 
         return res.status(201).json({
@@ -154,6 +157,9 @@ app.post("/api/auth/login", async (req, res) => {
         });
     }
 
+    // NEW: normalize login email
+    const normalizedEmail = email.toLowerCase();
+
     // Password whitespace validation
     if (password !== password.trim()) {
         return res.status(400).json({
@@ -174,7 +180,7 @@ app.post("/api/auth/login", async (req, res) => {
         });
     }
 
-    // NEW: Password strength validation during login
+    // Password strength validation
     const passwordRegex =
         /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
 
@@ -189,7 +195,7 @@ app.post("/api/auth/login", async (req, res) => {
 
         const [rows] = await db.promise().query(
             "SELECT * FROM users WHERE email = ?",
-            [email]
+            [normalizedEmail]
         );
 
         if (rows.length === 0) {
