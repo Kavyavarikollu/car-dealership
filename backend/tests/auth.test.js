@@ -10,7 +10,7 @@ describe("User Registration", () => {
             .post("/api/auth/register")
             .send({
                 name: "Kavya",
-               email: "kavya20260827@test.com",
+                email: "kavya20260830@test.com",
                 password: "123456"
             });
 
@@ -174,6 +174,10 @@ describe("User Registration", () => {
 
         expect(response.statusCode).toBe(200);
         expect(response.body.email).toBe(email);
+    });
+
+    afterAll((done) => {
+        db.end(done);
     });
 
 });
