@@ -13,21 +13,18 @@ app.use(express.json());
 app.post("/api/auth/register", async (req, res) => {
     const { name, email, password, confirmPassword } = req.body;
 
-    // Required fields
     if (!name || !email || !password || !confirmPassword) {
         return res.status(400).json({
             message: "All fields are required"
         });
     }
 
-    // Confirm password
     if (password !== confirmPassword) {
         return res.status(400).json({
             message: "Passwords do not match"
         });
     }
 
-    // Name validation
     if (name.trim().length === 0) {
         return res.status(400).json({
             message: "Name cannot be empty"
@@ -54,7 +51,6 @@ app.post("/api/auth/register", async (req, res) => {
         });
     }
 
-    // Email validation
     if (email !== email.trim() || email.includes(" ")) {
         return res.status(400).json({
             message: "Email cannot contain spaces"
@@ -69,14 +65,12 @@ app.post("/api/auth/register", async (req, res) => {
         });
     }
 
-    // Password cannot start/end with spaces
     if (password !== password.trim()) {
         return res.status(400).json({
             message: "Password cannot start or end with spaces"
         });
     }
 
-    // Password length
     if (password.length < 6) {
         return res.status(400).json({
             message: "Password must be at least 6 characters"
@@ -89,7 +83,6 @@ app.post("/api/auth/register", async (req, res) => {
         });
     }
 
-    // Password strength
     const passwordRegex =
         /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
 
@@ -151,6 +144,13 @@ app.post("/api/auth/login", async (req, res) => {
     if (!emailRegex.test(email)) {
         return res.status(400).json({
             message: "Invalid email format"
+        });
+    }
+
+    // NEW: Login password whitespace validation
+    if (password !== password.trim()) {
+        return res.status(400).json({
+            message: "Password cannot start or end with spaces"
         });
     }
 
