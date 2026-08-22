@@ -410,7 +410,6 @@ describe("User Registration", () => {
     });
 
 
-    // NEW TEST 1
     test("should reject login with short password", async () => {
         const response = await request(app)
             .post("/api/auth/login")
@@ -423,7 +422,6 @@ describe("User Registration", () => {
     });
 
 
-    // NEW TEST 2
     test("should reject login with long password", async () => {
         const password =
             "Kavya12345678901234567890123456789012345678901234567890";
@@ -439,7 +437,6 @@ describe("User Registration", () => {
     });
 
 
-    // NEW TEST 3
     test("should reject login password without uppercase letter", async () => {
         const response = await request(app)
             .post("/api/auth/login")
@@ -452,7 +449,6 @@ describe("User Registration", () => {
     });
 
 
-    // NEW TEST 4
     test("should reject login password without lowercase letter", async () => {
         const response = await request(app)
             .post("/api/auth/login")
@@ -465,7 +461,6 @@ describe("User Registration", () => {
     });
 
 
-    // NEW TEST 5
     test("should reject login password without number", async () => {
         const response = await request(app)
             .post("/api/auth/login")
@@ -682,240 +677,251 @@ describe("User Registration", () => {
 
         expect(response.statusCode).toBe(401);
     });
-test("should login with uppercase email", async () => {
-    const email = `uppercase_${Date.now()}@test.com`;
-    const password = "Kavya123";
-
-    const registerResponse = await request(app)
-        .post("/api/auth/register")
-        .send({
-            name: "Uppercase User",
-            email: email,
-            password: password,
-            confirmPassword: password
-        });
-
-    expect(registerResponse.statusCode).toBe(201);
-
-    const response = await request(app)
-        .post("/api/auth/login")
-        .send({
-            email: email.toUpperCase(),
-            password: password
-        });
-
-    expect(response.statusCode).toBe(200);
-    expect(response.body.token).toBeDefined();
-});
 
 
-test("should login with mixed case email", async () => {
-    const email = `mixedcase_${Date.now()}@test.com`;
-    const password = "Kavya123";
+    test("should login with uppercase email", async () => {
+        const email = `uppercase_${Date.now()}@test.com`;
+        const password = "Kavya123";
 
-    const registerResponse = await request(app)
-        .post("/api/auth/register")
-        .send({
-            name: "Mixed Case User",
-            email: email,
-            password: password,
-            confirmPassword: password
-        });
+        const registerResponse = await request(app)
+            .post("/api/auth/register")
+            .send({
+                name: "Uppercase User",
+                email: email,
+                password: password,
+                confirmPassword: password
+            });
 
-    expect(registerResponse.statusCode).toBe(201);
+        expect(registerResponse.statusCode).toBe(201);
 
-    const mixedEmail =
-        email.substring(0, 5).toUpperCase() +
-        email.substring(5);
+        const response = await request(app)
+            .post("/api/auth/login")
+            .send({
+                email: email.toUpperCase(),
+                password: password
+            });
 
-    const response = await request(app)
-        .post("/api/auth/login")
-        .send({
-            email: mixedEmail,
-            password: password
-        });
-
-    expect(response.statusCode).toBe(200);
-    expect(response.body.token).toBeDefined();
-});
+        expect(response.statusCode).toBe(200);
+        expect(response.body.token).toBeDefined();
+    });
 
 
-test("should store registration email in lowercase", async () => {
-    const email = `LOWERCASE_${Date.now()}@TEST.COM`;
-    const expectedEmail = email.toLowerCase();
+    test("should login with mixed case email", async () => {
+        const email = `mixedcase_${Date.now()}@test.com`;
+        const password = "Kavya123";
 
-    const response = await request(app)
-        .post("/api/auth/register")
-        .send({
-            name: "Lowercase User",
-            email: email,
-            password: "Kavya123",
-            confirmPassword: "Kavya123"
-        });
+        const registerResponse = await request(app)
+            .post("/api/auth/register")
+            .send({
+                name: "Mixed Case User",
+                email: email,
+                password: password,
+                confirmPassword: password
+            });
 
-    expect(response.statusCode).toBe(201);
+        expect(registerResponse.statusCode).toBe(201);
 
-    const [rows] = await db.promise().query(
-        "SELECT email FROM users WHERE email = ?",
-        [expectedEmail]
-    );
+        const mixedEmail =
+            email.substring(0, 5).toUpperCase() +
+            email.substring(5);
 
-    expect(rows.length).toBe(1);
-    expect(rows[0].email).toBe(expectedEmail);
-});
-test("should reject profile with Bearer only", async () => {
-    const response = await request(app)
-        .get("/api/auth/profile")
-        .set("Authorization", "Bearer");
+        const response = await request(app)
+            .post("/api/auth/login")
+            .send({
+                email: mixedEmail,
+                password: password
+            });
 
-    expect(response.statusCode).toBe(401);
-});
-
-
-test("should reject profile with empty Bearer token", async () => {
-    const response = await request(app)
-        .get("/api/auth/profile")
-        .set("Authorization", "Bearer ");
-
-    expect(response.statusCode).toBe(401);
-});
+        expect(response.statusCode).toBe(200);
+        expect(response.body.token).toBeDefined();
+    });
 
 
-test("should reject profile with Basic authorization", async () => {
-    const response = await request(app)
-        .get("/api/auth/profile")
-        .set("Authorization", "Basic abc123");
+    test("should store registration email in lowercase", async () => {
+        const email = `LOWERCASE_${Date.now()}@TEST.COM`;
+        const expectedEmail = email.toLowerCase();
 
-    expect(response.statusCode).toBe(401);
-});
+        const response = await request(app)
+            .post("/api/auth/register")
+            .send({
+                name: "Lowercase User",
+                email: email,
+                password: "Kavya123",
+                confirmPassword: "Kavya123"
+            });
 
+        expect(response.statusCode).toBe(201);
 
-test("should reject profile with extra authorization values", async () => {
-    const response = await request(app)
-        .get("/api/auth/profile")
-        .set("Authorization", "Bearer token extra");
+        const [rows] = await db.promise().query(
+            "SELECT email FROM users WHERE email = ?",
+            [expectedEmail]
+        );
 
-    expect(response.statusCode).toBe(401);
-});
-test("should reject profile with JWT missing id", async () => {
-    const token = jwt.sign(
-        {
-            email: "test@test.com"
-        },
-        process.env.JWT_SECRET || "secretkey",
-        {
-            expiresIn: "1h"
-        }
-    );
-
-    const response = await request(app)
-        .get("/api/auth/profile")
-        .set("Authorization", `Bearer ${token}`);
-
-    expect(response.statusCode).toBe(401);
-});
+        expect(rows.length).toBe(1);
+        expect(rows[0].email).toBe(expectedEmail);
+    });
 
 
-test("should reject profile with JWT missing email", async () => {
-    const token = jwt.sign(
-        {
-            id: 1
-        },
-        process.env.JWT_SECRET || "secretkey",
-        {
-            expiresIn: "1h"
-        }
-    );
+    test("should reject profile with Bearer only", async () => {
+        const response = await request(app)
+            .get("/api/auth/profile")
+            .set("Authorization", "Bearer");
 
-    const response = await request(app)
-        .get("/api/auth/profile")
-        .set("Authorization", `Bearer ${token}`);
-
-    expect(response.statusCode).toBe(401);
-});
+        expect(response.statusCode).toBe(401);
+    });
 
 
-test("should reject profile with invalid JWT id", async () => {
-    const token = jwt.sign(
-        {
-            id: -1,
-            email: "test@test.com"
-        },
-        process.env.JWT_SECRET || "secretkey",
-        {
-            expiresIn: "1h"
-        }
-    );
+    test("should reject profile with empty Bearer token", async () => {
+        const response = await request(app)
+            .get("/api/auth/profile")
+            .set("Authorization", "Bearer ");
 
-    const response = await request(app)
-        .get("/api/auth/profile")
-        .set("Authorization", `Bearer ${token}`);
-
-    expect(response.statusCode).toBe(401);
-});
-test("should reject logout with Bearer only", async () => {
-    const response = await request(app)
-        .post("/api/auth/logout")
-        .set("Authorization", "Bearer");
-
-    expect(response.statusCode).toBe(401);
-});
+        expect(response.statusCode).toBe(401);
+    });
 
 
-test("should reject logout with Basic authorization", async () => {
-    const response = await request(app)
-        .post("/api/auth/logout")
-        .set("Authorization", "Basic abc123");
+    test("should reject profile with Basic authorization", async () => {
+        const response = await request(app)
+            .get("/api/auth/profile")
+            .set("Authorization", "Basic abc123");
 
-    expect(response.statusCode).toBe(401);
-});
-
-
-test("should reject logout with invalid JWT", async () => {
-    const response = await request(app)
-        .post("/api/auth/logout")
-        .set("Authorization", "Bearer invalid.jwt.token");
-
-    expect(response.statusCode).toBe(401);
-});
-test("should reject registration with email containing only spaces", async () => {
-    const response = await request(app)
-        .post("/api/auth/register")
-        .send({
-            name: "Kavya",
-            email: "   ",
-            password: "Kavya123",
-            confirmPassword: "Kavya123"
-        });
-
-    expect(response.statusCode).toBe(400);
-});
+        expect(response.statusCode).toBe(401);
+    });
 
 
-test("should reject login with email containing only spaces", async () => {
-    const response = await request(app)
-        .post("/api/auth/login")
-        .send({
-            email: "   ",
-            password: "Kavya123"
-        });
+    test("should reject profile with extra authorization values", async () => {
+        const response = await request(app)
+            .get("/api/auth/profile")
+            .set("Authorization", "Bearer token extra");
 
-    expect(response.statusCode).toBe(400);
-});
+        expect(response.statusCode).toBe(401);
+    });
 
 
-test("should reject registration with password containing only spaces", async () => {
-    const response = await request(app)
-        .post("/api/auth/register")
-        .send({
-            name: "Kavya",
-            email: `spaces_${Date.now()}@test.com`,
-            password: "      ",
-            confirmPassword: "      "
-        });
+    test("should reject profile with JWT missing id", async () => {
+        const token = jwt.sign(
+            {
+                email: "test@test.com"
+            },
+            process.env.JWT_SECRET || "secretkey",
+            {
+                expiresIn: "1h"
+            }
+        );
 
-    expect(response.statusCode).toBe(400);
-});
+        const response = await request(app)
+            .get("/api/auth/profile")
+            .set("Authorization", `Bearer ${token}`);
+
+        expect(response.statusCode).toBe(401);
+    });
+
+
+    test("should reject profile with JWT missing email", async () => {
+        const token = jwt.sign(
+            {
+                id: 1
+            },
+            process.env.JWT_SECRET || "secretkey",
+            {
+                expiresIn: "1h"
+            }
+        );
+
+        const response = await request(app)
+            .get("/api/auth/profile")
+            .set("Authorization", `Bearer ${token}`);
+
+        expect(response.statusCode).toBe(401);
+    });
+
+
+    test("should reject profile with invalid JWT id", async () => {
+        const token = jwt.sign(
+            {
+                id: -1,
+                email: "test@test.com"
+            },
+            process.env.JWT_SECRET || "secretkey",
+            {
+                expiresIn: "1h"
+            }
+        );
+
+        const response = await request(app)
+            .get("/api/auth/profile")
+            .set("Authorization", `Bearer ${token}`);
+
+        expect(response.statusCode).toBe(401);
+    });
+
+
+    test("should reject logout with Bearer only", async () => {
+        const response = await request(app)
+            .post("/api/auth/logout")
+            .set("Authorization", "Bearer");
+
+        expect(response.statusCode).toBe(401);
+    });
+
+
+    test("should reject logout with Basic authorization", async () => {
+        const response = await request(app)
+            .post("/api/auth/logout")
+            .set("Authorization", "Basic abc123");
+
+        expect(response.statusCode).toBe(401);
+    });
+
+
+    test("should reject logout with invalid JWT", async () => {
+        const response = await request(app)
+            .post("/api/auth/logout")
+            .set("Authorization", "Bearer invalid.jwt.token");
+
+        expect(response.statusCode).toBe(401);
+    });
+
+
+    test("should reject registration with email containing only spaces", async () => {
+        const response = await request(app)
+            .post("/api/auth/register")
+            .send({
+                name: "Kavya",
+                email: "   ",
+                password: "Kavya123",
+                confirmPassword: "Kavya123"
+            });
+
+        expect(response.statusCode).toBe(400);
+    });
+
+
+    test("should reject login with email containing only spaces", async () => {
+        const response = await request(app)
+            .post("/api/auth/login")
+            .send({
+                email: "   ",
+                password: "Kavya123"
+            });
+
+        expect(response.statusCode).toBe(400);
+    });
+
+
+    test("should reject registration with password containing only spaces", async () => {
+        const response = await request(app)
+            .post("/api/auth/register")
+            .send({
+                name: "Kavya",
+                email: `spaces_${Date.now()}@test.com`,
+                password: "      ",
+                confirmPassword: "      "
+            });
+
+        expect(response.statusCode).toBe(400);
+    });
+
 
     afterAll((done) => {
         db.end(done);
