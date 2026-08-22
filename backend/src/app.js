@@ -1,6 +1,7 @@
 const express = require("express");
 const db = require("./db");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 const app = express();
 
@@ -35,6 +36,63 @@ app.post("/api/auth/register", async (req, res) => {
 
         res.status(500).json({
             message: "Registration failed"
+        });
+    }
+});
+
+app.post("/api/auth/login", async (req, res) => {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+        return res.status(400).json({
+            message: "Email and password are required"
+        });
+    }
+
+    try {
+        const [rows] = await db.promise().query(
+            "SELECT * FROM users WHERE email = ?",
+            [email]
+        );
+
+        if (rows.length === 0) {
+            return res.status(401).json({
+                message: "Invalid email or password"
+            });
+        }
+
+        const user = rows[0];
+
+        const isPasswordCorrect = await bcrypt.compare(
+            password,
+            user.password
+        );
+
+        if (!isPasswordCorrect) {
+            return res.status(401).json({
+                message: "Invalid email or password"
+            });
+        }
+
+        const token = jwt.sign(
+            {
+                id: user.id,
+                email: user.email
+            },
+            process.env.JWT_SECRET || "secretkey",
+            {
+                expiresIn: "1h"
+            }
+        );
+
+        res.status(200).json({
+            message: "Login successful",
+            token: token
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            message: "Login failed"
         });
     }
 });

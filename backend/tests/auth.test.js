@@ -10,7 +10,7 @@ describe("User Registration", () => {
             .post("/api/auth/register")
             .send({
                 name: "Kavya",
-                email: "kavya5@test.com",
+            email: "kavya20260823@test.com",
                 password: "123456"
             });
 
@@ -89,6 +89,28 @@ describe("User Registration", () => {
             });
 
         expect(response.statusCode).toBe(409);
+    });
+        test("should login with correct credentials", async () => {
+        const email = "login@test.com";
+        const password = "123456";
+
+        await request(app)
+            .post("/api/auth/register")
+            .send({
+                name: "Login User",
+                email: email,
+                password: password
+            });
+
+        const response = await request(app)
+            .post("/api/auth/login")
+            .send({
+                email: email,
+                password: password
+            });
+
+        expect(response.statusCode).toBe(200);
+        expect(response.body.token).toBeDefined();
     });
 
 });
