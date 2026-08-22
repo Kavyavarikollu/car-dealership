@@ -18,28 +18,24 @@ app.post("/api/auth/register", async (req, res) => {
         });
     }
 
-    // Validate name
     if (name.trim().length === 0) {
         return res.status(400).json({
             message: "Name cannot be empty"
         });
     }
 
-    // Name minimum length
     if (name.trim().length < 2) {
         return res.status(400).json({
             message: "Name must be at least 2 characters"
         });
     }
 
-    // Name maximum length
     if (name.trim().length > 50) {
         return res.status(400).json({
             message: "Name must not exceed 50 characters"
         });
     }
 
-    // Name can contain letters, spaces and hyphens only
     const nameRegex = /^[A-Za-z\s-]+$/;
 
     if (!nameRegex.test(name.trim())) {
@@ -48,14 +44,12 @@ app.post("/api/auth/register", async (req, res) => {
         });
     }
 
-    // Reject email with spaces
     if (email !== email.trim() || email.includes(" ")) {
         return res.status(400).json({
             message: "Email cannot contain spaces"
         });
     }
 
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!emailRegex.test(email)) {
@@ -64,17 +58,23 @@ app.post("/api/auth/register", async (req, res) => {
         });
     }
 
-    // Password minimum length
     if (password.length < 6) {
         return res.status(400).json({
             message: "Password must be at least 6 characters"
         });
     }
 
-    // Password maximum length
     if (password.length > 50) {
         return res.status(400).json({
             message: "Password must not exceed 50 characters"
+        });
+    }
+
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
+
+    if (!passwordRegex.test(password)) {
+        return res.status(400).json({
+            message: "Password must contain uppercase, lowercase and number"
         });
     }
 
@@ -91,7 +91,6 @@ app.post("/api/auth/register", async (req, res) => {
         });
 
     } catch (error) {
-
         if (error.code === "ER_DUP_ENTRY") {
             return res.status(409).json({
                 message: "Email already exists"
@@ -115,14 +114,12 @@ app.post("/api/auth/login", async (req, res) => {
         });
     }
 
-    // Reject email with spaces
     if (email !== email.trim() || email.includes(" ")) {
         return res.status(400).json({
             message: "Email cannot contain spaces"
         });
     }
 
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!emailRegex.test(email)) {

@@ -14,7 +14,7 @@ describe("User Registration", () => {
             .send({
                 name: "Kavya",
                 email: uniqueEmail,
-                password: "123456"
+                password: "Kavya123"
             });
 
         expect(response.statusCode).toBe(201);
@@ -25,7 +25,7 @@ describe("User Registration", () => {
             .post("/api/auth/register")
             .send({
                 name: "Kavya",
-                password: "123456"
+                password: "Kavya123"
             });
 
         expect(response.statusCode).toBe(400);
@@ -37,7 +37,7 @@ describe("User Registration", () => {
             .send({
                 name: "   ",
                 email: "emptyname@test.com",
-                password: "123456"
+                password: "Kavya123"
             });
 
         expect(response.statusCode).toBe(400);
@@ -49,7 +49,7 @@ describe("User Registration", () => {
             .send({
                 name: "Kavya",
                 email: "kavya2026",
-                password: "123456"
+                password: "Kavya123"
             });
 
         expect(response.statusCode).toBe(400);
@@ -61,7 +61,7 @@ describe("User Registration", () => {
             .send({
                 name: "Kavya",
                 email: " kavya@test.com ",
-                password: "123456"
+                password: "Kavya123"
             });
 
         expect(response.statusCode).toBe(400);
@@ -73,7 +73,7 @@ describe("User Registration", () => {
             .send({
                 name: "Kavya",
                 email: "shortpassword@test.com",
-                password: "123"
+                password: "Kav1"
             });
 
         expect(response.statusCode).toBe(400);
@@ -85,7 +85,7 @@ describe("User Registration", () => {
             .send({
                 name: "Kavya",
                 email: "longpassword@test.com",
-                password: "123456789012345678901234567890123456789012345678901"
+                password: "Kavya12345678901234567890123456789012345678901234567890"
             });
 
         expect(response.statusCode).toBe(400);
@@ -97,7 +97,7 @@ describe("User Registration", () => {
             .send({
                 name: "K",
                 email: "shortname@test.com",
-                password: "123456"
+                password: "Kavya123"
             });
 
         expect(response.statusCode).toBe(400);
@@ -109,7 +109,7 @@ describe("User Registration", () => {
             .send({
                 name: "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ",
                 email: "longname@test.com",
-                password: "123456"
+                password: "Kavya123"
             });
 
         expect(response.statusCode).toBe(400);
@@ -121,21 +121,57 @@ describe("User Registration", () => {
             .send({
                 name: "Kavya123",
                 email: "invalidname@test.com",
-                password: "123456"
+                password: "Kavya123"
+            });
+
+        expect(response.statusCode).toBe(400);
+    });
+
+    test("should reject password without uppercase letter", async () => {
+        const response = await request(app)
+            .post("/api/auth/register")
+            .send({
+                name: "Kavya",
+                email: "nouppercase@test.com",
+                password: "kavya123"
+            });
+
+        expect(response.statusCode).toBe(400);
+    });
+
+    test("should reject password without lowercase letter", async () => {
+        const response = await request(app)
+            .post("/api/auth/register")
+            .send({
+                name: "Kavya",
+                email: "nolowercase@test.com",
+                password: "KAVYA123"
+            });
+
+        expect(response.statusCode).toBe(400);
+    });
+
+    test("should reject password without number", async () => {
+        const response = await request(app)
+            .post("/api/auth/register")
+            .send({
+                name: "Kavya",
+                email: "nonumber@test.com",
+                password: "KavyaPassword"
             });
 
         expect(response.statusCode).toBe(400);
     });
 
     test("should save the user in the database", async () => {
-        const email = "database3@test.com";
+        const email = `database_${Date.now()}@test.com`;
 
         await request(app)
             .post("/api/auth/register")
             .send({
                 name: "Database User",
                 email: email,
-                password: "123456"
+                password: "Kavya123"
             });
 
         const [rows] = await db.promise().query(
@@ -147,8 +183,8 @@ describe("User Registration", () => {
     });
 
     test("should store a hashed password", async () => {
-        const email = "hash3@test.com";
-        const password = "123456";
+        const email = `hash_${Date.now()}@test.com`;
+        const password = "Kavya123";
 
         await request(app)
             .post("/api/auth/register")
@@ -169,14 +205,14 @@ describe("User Registration", () => {
     });
 
     test("should reject duplicate email", async () => {
-        const email = "duplicate@test.com";
+        const email = `duplicate_${Date.now()}@test.com`;
 
         await request(app)
             .post("/api/auth/register")
             .send({
                 name: "First User",
                 email: email,
-                password: "123456"
+                password: "Kavya123"
             });
 
         const response = await request(app)
@@ -184,15 +220,15 @@ describe("User Registration", () => {
             .send({
                 name: "Second User",
                 email: email,
-                password: "123456"
+                password: "Kavya123"
             });
 
         expect(response.statusCode).toBe(409);
     });
 
     test("should login with correct credentials", async () => {
-        const email = "login@test.com";
-        const password = "123456";
+        const email = `login_${Date.now()}@test.com`;
+        const password = "Kavya123";
 
         await request(app)
             .post("/api/auth/register")
@@ -217,7 +253,7 @@ describe("User Registration", () => {
         const response = await request(app)
             .post("/api/auth/login")
             .send({
-                password: "123456"
+                password: "Kavya123"
             });
 
         expect(response.statusCode).toBe(400);
@@ -238,7 +274,7 @@ describe("User Registration", () => {
             .post("/api/auth/login")
             .send({
                 email: "invalidemail",
-                password: "123456"
+                password: "Kavya123"
             });
 
         expect(response.statusCode).toBe(400);
@@ -249,29 +285,28 @@ describe("User Registration", () => {
             .post("/api/auth/login")
             .send({
                 email: " login@test.com ",
-                password: "123456"
+                password: "Kavya123"
             });
 
         expect(response.statusCode).toBe(400);
     });
 
     test("should reject login with wrong password", async () => {
-        const email = "wrongpass@test.com";
-        const password = "123456";
+        const email = `wrongpass_${Date.now()}@test.com`;
 
         await request(app)
             .post("/api/auth/register")
             .send({
                 name: "Wrong Password User",
                 email: email,
-                password: password
+                password: "Kavya123"
             });
 
         const response = await request(app)
             .post("/api/auth/login")
             .send({
                 email: email,
-                password: "wrongpassword"
+                password: "Wrong123"
             });
 
         expect(response.statusCode).toBe(401);
@@ -281,16 +316,16 @@ describe("User Registration", () => {
         const response = await request(app)
             .post("/api/auth/login")
             .send({
-                email: "unknown@test.com",
-                password: "123456"
+                email: `unknown_${Date.now()}@test.com`,
+                password: "Kavya123"
             });
 
         expect(response.statusCode).toBe(401);
     });
 
     test("should access protected profile with valid token", async () => {
-        const email = "profile@test.com";
-        const password = "123456";
+        const email = `profile_${Date.now()}@test.com`;
+        const password = "Kavya123";
 
         await request(app)
             .post("/api/auth/register")
@@ -360,8 +395,8 @@ describe("User Registration", () => {
     });
 
     test("should not expose password in profile", async () => {
-        const email = "secureprofile@test.com";
-        const password = "123456";
+        const email = `secureprofile_${Date.now()}@test.com`;
+        const password = "Kavya123";
 
         await request(app)
             .post("/api/auth/register")
@@ -390,8 +425,8 @@ describe("User Registration", () => {
     });
 
     test("should logout successfully with valid token", async () => {
-        const email = "logout@test.com";
-        const password = "123456";
+        const email = `logout_${Date.now()}@test.com`;
+        const password = "Kavya123";
 
         await request(app)
             .post("/api/auth/register")
