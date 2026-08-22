@@ -385,7 +385,6 @@ describe("User Registration", () => {
     });
 
 
-    // NEW TEST
     test("should reject login with password containing leading or trailing spaces", async () => {
         const email = `loginspace_${Date.now()}@test.com`;
 
@@ -405,6 +404,74 @@ describe("User Registration", () => {
             .send({
                 email: email,
                 password: " Kavya123 "
+            });
+
+        expect(response.statusCode).toBe(400);
+    });
+
+
+    // NEW TEST 1
+    test("should reject login with short password", async () => {
+        const response = await request(app)
+            .post("/api/auth/login")
+            .send({
+                email: "test@test.com",
+                password: "Kav1"
+            });
+
+        expect(response.statusCode).toBe(400);
+    });
+
+
+    // NEW TEST 2
+    test("should reject login with long password", async () => {
+        const password =
+            "Kavya12345678901234567890123456789012345678901234567890";
+
+        const response = await request(app)
+            .post("/api/auth/login")
+            .send({
+                email: "test@test.com",
+                password: password
+            });
+
+        expect(response.statusCode).toBe(400);
+    });
+
+
+    // NEW TEST 3
+    test("should reject login password without uppercase letter", async () => {
+        const response = await request(app)
+            .post("/api/auth/login")
+            .send({
+                email: "test@test.com",
+                password: "kavya123"
+            });
+
+        expect(response.statusCode).toBe(400);
+    });
+
+
+    // NEW TEST 4
+    test("should reject login password without lowercase letter", async () => {
+        const response = await request(app)
+            .post("/api/auth/login")
+            .send({
+                email: "test@test.com",
+                password: "KAVYA123"
+            });
+
+        expect(response.statusCode).toBe(400);
+    });
+
+
+    // NEW TEST 5
+    test("should reject login password without number", async () => {
+        const response = await request(app)
+            .post("/api/auth/login")
+            .send({
+                email: "test@test.com",
+                password: "KavyaPassword"
             });
 
         expect(response.statusCode).toBe(400);
@@ -615,30 +682,7 @@ describe("User Registration", () => {
 
         expect(response.statusCode).toBe(401);
     });
-test("should reject login with short password", async () => {
-    const response = await request(app)
-        .post("/api/auth/login")
-        .send({
-            email: "test@test.com",
-            password: "Kav1"
-        });
 
-    expect(response.statusCode).toBe(400);
-});
-
-test("should reject login with long password", async () => {
-    const password =
-        "Kavya12345678901234567890123456789012345678901234567890";
-
-    const response = await request(app)
-        .post("/api/auth/login")
-        .send({
-            email: "test@test.com",
-            password: password
-        });
-
-    expect(response.statusCode).toBe(400);
-});
 
     afterAll((done) => {
         db.end(done);

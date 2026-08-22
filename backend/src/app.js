@@ -14,14 +14,12 @@ app.post("/api/auth/register", async (req, res) => {
 
     const { name, email, password, confirmPassword } = req.body;
 
-    // Required fields
     if (!name || !email || !password || !confirmPassword) {
         return res.status(400).json({
             message: "All fields are required"
         });
     }
 
-    // Confirm password
     if (password !== confirmPassword) {
         return res.status(400).json({
             message: "Passwords do not match"
@@ -70,14 +68,13 @@ app.post("/api/auth/register", async (req, res) => {
         });
     }
 
-    // Password whitespace validation
+    // Password validation
     if (password !== password.trim()) {
         return res.status(400).json({
             message: "Password cannot start or end with spaces"
         });
     }
 
-    // Password length
     if (password.length < 6) {
         return res.status(400).json({
             message: "Password must be at least 6 characters"
@@ -90,7 +87,6 @@ app.post("/api/auth/register", async (req, res) => {
         });
     }
 
-    // Password strength
     const passwordRegex =
         /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
 
@@ -137,21 +133,19 @@ app.post("/api/auth/login", async (req, res) => {
 
     const { email, password } = req.body;
 
-    // Required fields
     if (!email || !password) {
         return res.status(400).json({
             message: "Email and password are required"
         });
     }
 
-    // Email spaces
+    // Email validation
     if (email !== email.trim() || email.includes(" ")) {
         return res.status(400).json({
             message: "Email cannot contain spaces"
         });
     }
 
-    // Email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!emailRegex.test(email)) {
@@ -160,14 +154,14 @@ app.post("/api/auth/login", async (req, res) => {
         });
     }
 
-    // Password spaces
+    // Password whitespace validation
     if (password !== password.trim()) {
         return res.status(400).json({
             message: "Password cannot start or end with spaces"
         });
     }
 
-    // NEW: Login password length validation
+    // Password length validation
     if (password.length < 6) {
         return res.status(400).json({
             message: "Password must be at least 6 characters"
@@ -177,6 +171,17 @@ app.post("/api/auth/login", async (req, res) => {
     if (password.length > 50) {
         return res.status(400).json({
             message: "Password must not exceed 50 characters"
+        });
+    }
+
+    // NEW: Password strength validation during login
+    const passwordRegex =
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
+
+    if (!passwordRegex.test(password)) {
+        return res.status(400).json({
+            message:
+                "Password must contain uppercase, lowercase and number"
         });
     }
 
