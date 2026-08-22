@@ -878,6 +878,44 @@ test("should reject logout with invalid JWT", async () => {
 
     expect(response.statusCode).toBe(401);
 });
+test("should reject registration with email containing only spaces", async () => {
+    const response = await request(app)
+        .post("/api/auth/register")
+        .send({
+            name: "Kavya",
+            email: "   ",
+            password: "Kavya123",
+            confirmPassword: "Kavya123"
+        });
+
+    expect(response.statusCode).toBe(400);
+});
+
+
+test("should reject login with email containing only spaces", async () => {
+    const response = await request(app)
+        .post("/api/auth/login")
+        .send({
+            email: "   ",
+            password: "Kavya123"
+        });
+
+    expect(response.statusCode).toBe(400);
+});
+
+
+test("should reject registration with password containing only spaces", async () => {
+    const response = await request(app)
+        .post("/api/auth/register")
+        .send({
+            name: "Kavya",
+            email: `spaces_${Date.now()}@test.com`,
+            password: "      ",
+            confirmPassword: "      "
+        });
+
+    expect(response.statusCode).toBe(400);
+});
 
     afterAll((done) => {
         db.end(done);
