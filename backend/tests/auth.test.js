@@ -10,7 +10,7 @@ describe("User Registration", () => {
             .post("/api/auth/register")
             .send({
                 name: "Kavya",
-            email: "kavya20260823@test.com",
+            email: "kavya20260824@test.com",
                 password: "123456"
             });
 
@@ -111,6 +111,36 @@ describe("User Registration", () => {
 
         expect(response.statusCode).toBe(200);
         expect(response.body.token).toBeDefined();
-    });
+    });test("should reject login with wrong password", async () => {
+    const email = "wrongpass@test.com";
+    const password = "123456";
+
+    await request(app)
+        .post("/api/auth/register")
+        .send({
+            name: "Wrong Password User",
+            email: email,
+            password: password
+        });
+
+    const response = await request(app)
+        .post("/api/auth/login")
+        .send({
+            email: email,
+            password: "wrongpassword"
+        });
+
+    expect(response.statusCode).toBe(401);
+});
+test("should reject login with unknown email", async () => {
+    const response = await request(app)
+        .post("/api/auth/login")
+        .send({
+            email: "unknown@test.com",
+            password: "123456"
+        });
+
+    expect(response.statusCode).toBe(401);
+});
 
 });
