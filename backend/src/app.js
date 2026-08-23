@@ -1,9 +1,33 @@
 const express = require("express");
+const cors = require("cors");
 const db = require("./db");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const app = express();
+
+app.use((req, res, next) => {
+    res.header(
+        "Access-Control-Allow-Origin",
+        "http://localhost:5173"
+    );
+
+    res.header(
+        "Access-Control-Allow-Methods",
+        "GET,POST,PUT,DELETE,OPTIONS"
+    );
+
+    res.header(
+        "Access-Control-Allow-Headers",
+        "Content-Type, Authorization"
+    );
+
+    if (req.method === "OPTIONS") {
+        return res.sendStatus(204);
+    }
+
+    next();
+});
 
 app.use(express.json());
 
@@ -314,10 +338,12 @@ app.post("/api/auth/login", async (req, res) => {
             });
         }
 
+        // ROLE INCLUDED IN TOKEN
         const token = jwt.sign(
             {
                 id: user.id,
-                email: user.email
+                email: user.email,
+                role: user.role
             },
             process.env.JWT_SECRET || "secretkey",
             {
@@ -345,6 +371,10 @@ app.post("/api/auth/login", async (req, res) => {
 // PROFILE
 // =====================================================
 
+// =====================================================
+// PROFILE
+// =====================================================
+
 app.get(
     "/api/auth/profile",
     authenticateToken,
@@ -353,7 +383,7 @@ app.get(
         try {
 
             const [rows] = await db.promise().query(
-                "SELECT id, name, email FROM users WHERE id = ?",
+                "SELECT id, name, email, role FROM users WHERE id = ?",
                 [req.user.id]
             );
 
@@ -363,12 +393,19 @@ app.get(
                 });
             }
 
-            return res.status(200).json(rows[0]);
+            return res.status(200).json({
+                id: rows[0].id,
+                name: rows[0].name,
+                email: rows[0].email,
+                role: rows[0].role
+            });
 
         } catch (error) {
 
-            return res.status(401).json({
-                message: "Unauthorized"
+            console.error(error);
+
+            return res.status(500).json({
+                message: "Failed to fetch profile"
             });
         }
     }
