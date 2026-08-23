@@ -411,7 +411,33 @@ describe("Vehicle Inventory", () => {
         expect(response.body.message)
             .toBe("Vehicle is out of stock");
     });
+    // =====================================================
+    // PURCHASE HISTORY
+    // =====================================================
 
+    test("should get purchase history for logged-in user", async () => {
+
+        const response = await request(app)
+            .get("/api/purchases")
+            .set("Authorization", `Bearer ${token}`);
+
+        expect(response.statusCode).toBe(200);
+
+        expect(response.body.purchases)
+            .toBeDefined();
+
+        expect(Array.isArray(response.body.purchases))
+            .toBe(true);
+    });
+
+
+    test("should reject purchase history without authentication", async () => {
+
+        const response = await request(app)
+            .get("/api/purchases");
+
+        expect(response.statusCode).toBe(401);
+    });
 
     // =====================================================
     // DELETE
