@@ -6,4 +6,4 @@ This project was developed with assistance from ChatGPT.
 
 Raw AI development conversation:
 
-(https://chatgpt.com/c/6a8990b5-20e4-83ee-9ca0-7294c15065e7)
+https://chatgpt.com/share/6a8ac5b3-21ac-83e9-b88e-732c4e6244d6
