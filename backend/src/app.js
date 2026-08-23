@@ -766,12 +766,17 @@ app.put(
 // PURCHASE VEHICLE
 // =====================================================
 
+// =====================================================
+// PURCHASE VEHICLE
+// =====================================================
+
 app.post(
     "/api/vehicles/:id/purchase",
     authenticateToken,
     async (req, res) => {
 
         const vehicleId = Number(req.params.id);
+        const userId = req.user.id;
 
         if (
             !Number.isInteger(vehicleId) ||
@@ -804,6 +809,7 @@ app.post(
                 });
             }
 
+            // Decrease vehicle stock
             await db.promise().query(
                 `UPDATE vehicles
                  SET quantity = quantity - 1
@@ -811,6 +817,19 @@ app.post(
                 [vehicleId]
             );
 
+            // Save purchase history
+            await db.promise().query(
+                `INSERT INTO purchases
+                 (user_id, vehicle_id, price)
+                 VALUES (?, ?, ?)`,
+                [
+                    userId,
+                    vehicleId,
+                    vehicle.price
+                ]
+            );
+
+            // Get updated vehicle
             const [updatedRows] =
                 await db.promise().query(
                     "SELECT * FROM vehicles WHERE id = ?",
@@ -832,7 +851,50 @@ app.post(
         }
     }
 );
+// =====================================================
+// GET MY PURCHASES
+// =====================================================
 
+app.get(
+    "/api/purchases",
+    authenticateToken,
+    async (req, res) => {
+
+        const userId = req.user.id;
+
+        try {
+
+            const [rows] = await db.promise().query(
+                `SELECT
+                    p.id,
+                    p.vehicle_id,
+                    v.make,
+                    v.model,
+                    v.category,
+                    p.price,
+                    p.purchased_at
+                 FROM purchases p
+                 JOIN vehicles v
+                   ON p.vehicle_id = v.id
+                 WHERE p.user_id = ?
+                 ORDER BY p.purchased_at DESC`,
+                [userId]
+            );
+
+            return res.status(200).json({
+                purchases: rows
+            });
+
+        } catch (error) {
+
+            console.error(error);
+
+            return res.status(500).json({
+                message: "Failed to fetch purchases"
+            });
+        }
+    }
+);
 
 // =====================================================
 // DELETE VEHICLE - ADMIN ONLY

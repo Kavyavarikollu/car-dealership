@@ -40,9 +40,11 @@ function App() {
   const [vehicleForm, setVehicleForm] = useState(emptyVehicle);
 
   const [editingVehicle, setEditingVehicle] = useState(null);
-  const [restockVehicleData, setRestockVehicleData] = useState(null);
-
-  const [showAddModal, setShowAddModal] = useState(false);
+const [restockVehicleData, setRestockVehicleData] = useState(null);
+const [selectedVehicle, setSelectedVehicle] = useState(null);
+const [purchases, setPurchases] = useState([]);
+const [showPurchases, setShowPurchases] = useState(false);
+const [showAddModal, setShowAddModal] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   const token = localStorage.getItem("token");
@@ -317,6 +319,35 @@ function App() {
       showMessage("Purchase failed.", "error");
     }
   };
+  // ---------------------------------------------------------
+// MY PURCHASES
+// ---------------------------------------------------------
+
+const loadPurchases = async () => {
+  try {
+    const response = await fetch(`${API}/purchases`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      showMessage(
+        data.message || "Could not load purchases.",
+        "error"
+      );
+      return;
+    }
+
+    setPurchases(data.purchases || []);
+    setShowPurchases(true);
+
+  } catch (error) {
+    showMessage("Could not load purchases.", "error");
+  }
+};
 
   // ---------------------------------------------------------
   // ADD VEHICLE
@@ -750,6 +781,14 @@ function App() {
 
               {isAdmin ? "Administrator" : "Customer"}
             </div>
+            {!isAdmin && (
+  <button
+    className="secondary-button"
+    onClick={loadPurchases}
+  >
+    🧾 My Purchases
+  </button>
+)}
 
             <button
               className="profile-button"
@@ -1096,6 +1135,14 @@ function App() {
                               : "Purchase →"}
                           </button>
                         )}
+                        {!isAdmin && (
+  <button
+    className="details-button"
+    onClick={() => setSelectedVehicle(vehicle)}
+  >
+    View Details
+  </button>
+)}
                       </div>
 
                       {isAdmin && (
@@ -1432,8 +1479,188 @@ function App() {
             </form>
           </div>
         </div>
+            )}
+
+      {/* VEHICLE DETAILS MODAL */}
+
+      {selectedVehicle && (
+        <div
+          className="modal-overlay"
+          onClick={() => setSelectedVehicle(null)}
+        >
+          <div
+            className="modal-card"
+            onClick={(e) => e.stopPropagation()}
+          >
+
+            <div className="modal-header">
+              <div>
+                <p className="eyebrow">VEHICLE DETAILS</p>
+
+                <h3>
+                  {selectedVehicle.make}{" "}
+                  {selectedVehicle.model}
+                </h3>
+              </div>
+
+              <button
+                className="close-button"
+                onClick={() => setSelectedVehicle(null)}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="vehicle-detail-box">
+
+              <div className="vehicle-detail-icon">
+                {selectedVehicle.category
+                  ?.toLowerCase()
+                  .includes("suv")
+                  ? "🚙"
+                  : selectedVehicle.category
+                      ?.toLowerCase()
+                      .includes("sport")
+                  ? "🏎️"
+                  : "🚘"}
+              </div>
+
+              <div className="vehicle-detail-info">
+
+                <p>
+                  <strong>Make</strong>
+                  {selectedVehicle.make}
+                </p>
+
+                <p>
+                  <strong>Model</strong>
+                  {selectedVehicle.model}
+                </p>
+
+                <p>
+                  <strong>Category</strong>
+                  {selectedVehicle.category}
+                </p>
+
+                <p>
+                  <strong>Price</strong>
+                  ₹
+                  {Number(
+                    selectedVehicle.price
+                  ).toLocaleString("en-IN")}
+                </p>
+
+                <p>
+                  <strong>Available</strong>
+                  {selectedVehicle.quantity} units
+                </p>
+
+              </div>
+
+            </div>
+
+            <button
+              className="primary-button modal-submit"
+              disabled={
+                Number(selectedVehicle.quantity) === 0
+              }
+              onClick={() => {
+                purchaseVehicle(selectedVehicle);
+                setSelectedVehicle(null);
+              }}
+            >
+              {Number(selectedVehicle.quantity) === 0
+                ? "Out of Stock"
+                : "Purchase This Vehicle →"}
+            </button>
+
+          </div>
+        </div>
+
       )}
+            {/* MY PURCHASES MODAL */}
+
+      {showPurchases && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowPurchases(false)}
+        >
+          <div
+            className="modal-card purchases-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+
+            <div className="modal-header">
+              <div>
+                <p className="eyebrow">YOUR JOURNEY</p>
+                <h3>My Purchases</h3>
+              </div>
+
+              <button
+                className="close-button"
+                onClick={() => setShowPurchases(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            {purchases.length === 0 ? (
+              <div className="empty-state">
+                <div>🚘</div>
+                <h3>No purchases yet</h3>
+                <p>
+                  Your purchased vehicles will appear here.
+                </p>
+              </div>
+            ) : (
+              <div className="purchase-list">
+
+                {purchases.map((purchase) => (
+                  <div
+                    className="purchase-card"
+                    key={purchase.id}
+                  >
+
+                    <div className="purchase-icon">
+                      🚘
+                    </div>
+
+                    <div className="purchase-info">
+                      <p className="eyebrow">
+                        {purchase.category}
+                      </p>
+
+                      <h4>
+                        {purchase.make} {purchase.model}
+                      </h4>
+
+                      <p>
+                        Purchased on{" "}
+                        {new Date(
+                          purchase.purchased_at
+                        ).toLocaleDateString("en-IN")}
+                      </p>
+                    </div>
+
+                    <div className="purchase-price">
+                      ₹
+                      {Number(
+                        purchase.price
+                      ).toLocaleString("en-IN")}
+                    </div>
+
+                  </div>
+                ))}
+
+              </div>
+            )}
+
+          </div>
+        </div>
+      )}
+
     </div>
+    
   );
 }
 
