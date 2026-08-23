@@ -234,14 +234,31 @@ I remained responsible for reviewing the suggestions, testing the application, a
 
 ## Screenshots
 
-Screenshots of the completed application can be included here to demonstrate:
+## Screenshots
 
-- User registration and login
-- Vehicle listing
-- Vehicle search and filtering
-- Vehicle purchase
-- Admin inventory management
-- Purchase history
+### Login
+
+![Login](screenshots/login.png)
+
+### Registration
+
+![Registration](screenshots/register.png)
+
+### Customer Dashboard
+
+![Customer Dashboard](screenshots/dashboard.png)
+
+### Vehicle Inventory and Search
+
+![Vehicle Inventory](screenshots/vehicles.png)
+
+### Purchase History
+
+![Purchase History](screenshots/purchases.png)
+
+### Admin Inventory Management
+
+![Admin Inventory Management](screenshots/admin.png)
 
 ## Deliverables
 
